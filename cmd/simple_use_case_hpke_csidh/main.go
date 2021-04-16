@@ -23,7 +23,12 @@ var (
 )
 
 func main() {
-	fmt.Println("Hello Client")
+	fmt.Println("Hello simple_use_case_hpke")
+
+	fmt.Println("Success:", mainInternal())
+}
+func mainInternal() bool {
+	fmt.Println("Hello simple_use_case_hpke_csidh")
 
 	// ---------------
 	fmt.Println("Generation Public Keys")
@@ -53,7 +58,7 @@ func main() {
 
 	decryptedWireData := decrypt(aliceKeyPair.PublicKeys, bobKeyPair.PrivateKeys, encryptedWireData)
 
-	fmt.Println("Message is equal:", bytes.Equal(plainMsg, decryptedWireData))
+	return bytes.Equal(plainMsg, decryptedWireData)
 }
 
 func decrypt(public PublicKeys, private PrivateKeys, wiredata WireData) []byte {

@@ -30,3 +30,9 @@ func Benchmark_mainInternal(b *testing.B) {
 		mainInternal()
 	}
 }
+
+func Benchmark_GenerateKeyPair(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		GenerateKeyPair()
+	}
+}

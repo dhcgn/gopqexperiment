@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/cloudflare/circl/hpke"
+	"github.com/cloudflare/circl/kem"
 )
 
 var (
@@ -33,14 +34,14 @@ func mainInternal() bool {
 	Println("Generation Public Keys")
 	// ---------------
 
-	alicePublic, alicePrivate, err := kemID.Scheme().GenerateKeyPair()
+	alicePublic, alicePrivate, err := GenerateKeyPair()
 	if err != nil {
 		panic(err)
 	}
 	Println(" - Alice Public: ", printKey(alicePublic))
 	Println(" - Alice Private:", printKey(alicePrivate))
 
-	bobPublic, bobPrivate, err := kemID.Scheme().GenerateKeyPair()
+	bobPublic, bobPrivate, err := GenerateKeyPair()
 	if err != nil {
 		panic(err)
 	}
@@ -70,6 +71,10 @@ func mainInternal() bool {
 	decryptedWireData := decrypt(alicePublicRaw, bobPrivateRaw, encryptedWireData)
 
 	return bytes.Equal(plainMsg, decryptedWireData)
+}
+
+func GenerateKeyPair() (kem.PublicKey, kem.PrivateKey, error) {
+	return kemID.Scheme().GenerateKeyPair()
 }
 
 func decrypt(public, private []byte, wiredata WireData) []byte {

@@ -14,6 +14,8 @@ import (
 )
 
 var (
+	printMessages = true
+
 	kemID  = hpke.KEM_P384_HKDF_SHA384
 	kdfID  = hpke.KDF_HKDF_SHA384
 	aeadID = hpke.AEAD_AES256GCM
@@ -23,25 +25,25 @@ var (
 )
 
 func main() {
-	fmt.Println("Hello simple_use_case_hpke")
+	Println("Hello simple_use_case_hpke")
 
-	fmt.Println("Success:", mainInternal())
+	Println("Success:", mainInternal())
 }
 func mainInternal() bool {
-	fmt.Println("Hello simple_use_case_hpke_csidh")
+	Println("Hello simple_use_case_hpke_csidh")
 
 	// ---------------
-	fmt.Println("Generation Public Keys")
+	Println("Generation Public Keys")
 	// ---------------
 
 	aliceKeyPair := GenerateKeyPair()
-	fmt.Println(" - Alice KeyPair: ", aliceKeyPair.GetJson())
+	Println(" - Alice KeyPair: ", aliceKeyPair.GetJson())
 
 	bobKeyPair := GenerateKeyPair()
-	fmt.Println(" - Bob KeyPair: ", bobKeyPair.GetJson())
+	Println(" - Bob KeyPair: ", bobKeyPair.GetJson())
 
 	// ---------------
-	fmt.Println("Alice creates a message for bob")
+	Println("Alice creates a message for bob")
 	// ---------------
 
 	plainMsg := []byte("This is a secret Message")
@@ -53,7 +55,7 @@ func mainInternal() bool {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(string(j))
+	Println(string(j))
 	// Sends encryptedWireData over the wire
 
 	decryptedWireData := decrypt(aliceKeyPair.PublicKeys, bobKeyPair.PrivateKeys, encryptedWireData)
@@ -82,7 +84,7 @@ func decrypt(public PublicKeys, private PrivateKeys, wiredata WireData) []byte {
 	psk := DeriveSecret(public.PublicKeyCsidh, private.PrivateKeyCsidh)
 	pskId := []byte("My PSK")
 
-	fmt.Println("Use PSK:", base64.StdEncoding.EncodeToString(psk))
+	Println("Use PSK:", base64.StdEncoding.EncodeToString(psk))
 
 	opener, err := receiver.SetupAuthPSK(wiredata.EncapsulatedKey, psk, pskId, publicKey)
 	if err != nil {
@@ -118,7 +120,7 @@ func encrypt(private PrivateKeys, public PublicKeys, msg []byte) WireData {
 	psk := DeriveSecret(public.PublicKeyCsidh, private.PrivateKeyCsidh)
 	pskId := []byte("My PSK")
 
-	fmt.Println("Use PSK:", base64.StdEncoding.EncodeToString(psk))
+	Println("Use PSK:", base64.StdEncoding.EncodeToString(psk))
 
 	enc, sealer, err := sender.SetupAuthPSK(rand.Reader, privateKey, psk, pskId)
 	if err != nil {
@@ -132,9 +134,9 @@ func encrypt(private PrivateKeys, public PublicKeys, msg []byte) WireData {
 		panic(err)
 	}
 
-	// fmt.Println("encrypt")
-	// fmt.Println(" - encapsulated key:", base64.StdEncoding.EncodeToString(enc))
-	// fmt.Println(" - cipher text:", base64.StdEncoding.EncodeToString(ct))
+	// Println("encrypt")
+	// Println(" - encapsulated key:", base64.StdEncoding.EncodeToString(enc))
+	// Println(" - cipher text:", base64.StdEncoding.EncodeToString(ct))
 
 	return WireData{
 		EncapsulatedKey: enc,
@@ -229,4 +231,10 @@ func (hkp HybridKeyPair) GetJson() string {
 		panic(err)
 	}
 	return string(j)
+}
+
+func Println(a ...interface{}) {
+	if printMessages {
+		fmt.Println(a...)
+	}
 }

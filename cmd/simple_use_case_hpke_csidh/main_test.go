@@ -2,6 +2,10 @@ package main
 
 import "testing"
 
+func init() {
+	printMessages = false
+}
+
 func Test_mainInternal(t *testing.T) {
 	tests := []struct {
 		name string
@@ -18,5 +22,11 @@ func Test_mainInternal(t *testing.T) {
 				t.Errorf("mainInternal() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func Benchmark_mainInternal(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		mainInternal()
 	}
 }

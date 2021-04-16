@@ -12,6 +12,8 @@ import (
 )
 
 var (
+	printMessages = true
+
 	kemID  = hpke.KEM_P384_HKDF_SHA384
 	kdfID  = hpke.KDF_HKDF_SHA384
 	aeadID = hpke.AEAD_AES256GCM
@@ -21,32 +23,32 @@ var (
 )
 
 func main() {
-	fmt.Println("Hello simple_use_case_hpke")
+	Println("Hello simple_use_case_hpke")
 
-	fmt.Println("Success:", mainInternal())
+	Println("Success:", mainInternal())
 }
 
 func mainInternal() bool {
 	// ---------------
-	fmt.Println("Generation Public Keys")
+	Println("Generation Public Keys")
 	// ---------------
 
 	alicePublic, alicePrivate, err := kemID.Scheme().GenerateKeyPair()
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(" - Alice Public: ", printKey(alicePublic))
-	fmt.Println(" - Alice Private:", printKey(alicePrivate))
+	Println(" - Alice Public: ", printKey(alicePublic))
+	Println(" - Alice Private:", printKey(alicePrivate))
 
 	bobPublic, bobPrivate, err := kemID.Scheme().GenerateKeyPair()
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(" - Bob Public: ", printKey(bobPublic))
-	fmt.Println(" - Bob Private:", printKey(bobPrivate))
+	Println(" - Bob Public: ", printKey(bobPublic))
+	Println(" - Bob Private:", printKey(bobPrivate))
 
 	// ---------------
-	fmt.Println("Alice creates a message for bob")
+	Println("Alice creates a message for bob")
 	// ---------------
 
 	alicePrivateRaw, _ := alicePrivate.MarshalBinary()
@@ -60,7 +62,7 @@ func mainInternal() bool {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(string(j))
+	Println(string(j))
 	// Sends encryptedWireData over the wire
 
 	alicePublicRaw, _ := alicePublic.MarshalBinary()
@@ -131,9 +133,9 @@ func encrypt(private, public, msg []byte) WireData {
 		panic(err)
 	}
 
-	// fmt.Println("encrypt")
-	// fmt.Println(" - encapsulated key:", base64.StdEncoding.EncodeToString(enc))
-	// fmt.Println(" - cipher text:", base64.StdEncoding.EncodeToString(ct))
+	// Println("encrypt")
+	// Println(" - encapsulated key:", base64.StdEncoding.EncodeToString(enc))
+	// Println(" - cipher text:", base64.StdEncoding.EncodeToString(ct))
 
 	return WireData{
 		EncapsulatedKey: enc,
@@ -152,4 +154,10 @@ type WireData struct {
 	EncapsulatedKey []byte
 	CipherText      []byte
 	AssociatedData  []byte
+}
+
+func Println(a ...interface{}) {
+	if printMessages {
+		fmt.Println(a...)
+	}
 }

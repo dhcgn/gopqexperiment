@@ -14,8 +14,8 @@ import (
 var (
 	printMessages = true
 
-	kemID  = hpke.KEM_P384_HKDF_SHA384
-	kdfID  = hpke.KDF_HKDF_SHA384
+	kemID  = hpke.KEM_X448_HKDF_SHA512
+	kdfID  = hpke.KDF_HKDF_SHA512
 	aeadID = hpke.AEAD_AES256GCM
 
 	// suite  = hpke.NewSuite(kemID, kdfID, aeadID)

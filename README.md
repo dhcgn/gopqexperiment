@@ -29,6 +29,30 @@ With the combination of the proven Advanced Encryption Standard (AES) and the re
 4. Key Derivation Functions (KDFs)
    1. HKDF-SHA512
 
+### Drawback
+
+Huge performance penalty when using hpke with csidh, 402.4 milliseconds vs 2.7 milliseconds overall duration with key generation.
+
+```plain
+goos: windows
+goarch: amd64
+pkg: github.com/dhcgn/gopqexperiment/cmd/simple_use_case_hpke
+cpu: AMD Ryzen 7 PRO 4750U with Radeon Graphics
+Benchmark_mainInternal-16                    408           2708316 ns/op
+Benchmark_GenerateKeyPair-16                5000            205432 ns/op
+PASS
+ok      github.com/dhcgn/gopqexperiment/cmd/simple_use_case_hpke       2.584s
+
+goos: windows
+goarch: amd64
+pkg: github.com/dhcgn/gopqexperiment/cmd/simple_use_case_hpke_csidh
+cpu: AMD Ryzen 7 PRO 4750U with Radeon Graphics
+Benchmark_mainInternal-16                      3         402387067 ns/op
+Benchmark_GenerateKeyPair-16                  18          66902017 ns/op
+PASS
+ok      github.com/dhcgn/gopqexperiment/cmd/simple_use_case_hpke_csidh 4.112s
+```
+
 ## TODO
 
 1. AEAD ciphertexts produced by HPKE do not hide the plaintext length to archiv a level of privacy a suitable padding mechanism must be used.

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/sha512"
-	"encoding"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -193,12 +192,6 @@ func GenerateKeyPair() HybridKeyPair {
 			PrivateKeyCsidh: privateCsidhData[:],
 		},
 	}
-}
-
-func printKey(binaryMarshaler encoding.BinaryMarshaler) string {
-	bobPublicRaw, _ := binaryMarshaler.MarshalBinary()
-	base64 := base64.StdEncoding.EncodeToString(bobPublicRaw)
-	return base64
 }
 
 type WireData struct {

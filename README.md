@@ -1,6 +1,7 @@
 # Go PQ Experiment
 
 [![Go](https://github.com/dhcgn/gopqexperiment/actions/workflows/go.yml/badge.svg)](https://github.com/dhcgn/gopqexperiment/actions/workflows/go.yml)
+[![CodeQL](https://github.com/dhcgn/gopqexperiment/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/dhcgn/gopqexperiment/actions/workflows/codeql-analysis.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/dhcgn/gopqexperiment)](https://goreportcard.com/report/github.com/dhcgn/gopqexperiment)
 
 Just an **experiment** repro to play around to archiv a post-quantum safe system.

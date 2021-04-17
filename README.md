@@ -33,6 +33,13 @@ With the combination of the proven Advanced Encryption Standard (AES) and the re
 4. Key Derivation Functions (KDFs)
    1. HKDF-SHA512
 
+### Use Cases
+
+- Trivial use case with HPKE for the purpose of demonstration  
+  [main/cmd/simple_use_case_hpke_csidh](https://github.com/dhcgn/gopqexperiment/tree/main/cmd/simple_use_case_hpke_csidh)
+- Trivial use case with HPKE und cSIDH for the purpose of demonstration  
+  [main/cmd/simple_use_case_hpke](https://github.com/dhcgn/gopqexperiment/tree/main/cmd/simple_use_case_hpke)
+
 ### Drawback
 
 Huge performance penalty when using hpke with csidh, 402.4 milliseconds vs 2.7 milliseconds overall duration with key generation.

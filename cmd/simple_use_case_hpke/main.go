@@ -26,6 +26,8 @@ func main() {
 }
 
 func mainInternal() bool {
+	Println("Hello simple_use_case_hpke")
+
 	// ---------------
 	Println("Generation Public Keys")
 	// ---------------
@@ -48,7 +50,10 @@ func mainInternal() bool {
 
 	plainMsg := []byte("This is a secret Message")
 
-	encryptedWireData, _ := encrypt(aliceKeyPair.PrivateKeys, bobKeyPair.PublicKeys, plainMsg)
+	encryptedWireData, err := encrypt(aliceKeyPair.PrivateKeys, bobKeyPair.PublicKeys, plainMsg)
+	if err != nil {
+		panic(err)
+	}
 
 	// Sends encryptedWireData over the wire
 	j, err := json.MarshalIndent(encryptedWireData, "", "  ")

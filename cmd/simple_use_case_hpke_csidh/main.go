@@ -27,6 +27,7 @@ func main() {
 
 	Println("Success:", mainInternal())
 }
+
 func mainInternal() bool {
 	Println("Hello simple_use_case_hpke_csidh")
 
@@ -34,10 +35,16 @@ func mainInternal() bool {
 	Println("Generation Public Keys")
 	// ---------------
 
-	aliceKeyPair := GenerateKeyPair()
+	aliceKeyPair, err := GenerateKeyPair()
+	if err != nil {
+		panic(err)
+	}
 	Println(" - Alice KeyPair: ", aliceKeyPair.GetJson())
 
-	bobKeyPair := GenerateKeyPair()
+	bobKeyPair, err := GenerateKeyPair()
+	if err != nil {
+		panic(err)
+	}
 	Println(" - Bob KeyPair: ", bobKeyPair.GetJson())
 
 	// ---------------
@@ -64,41 +71,45 @@ func mainInternal() bool {
 	return bytes.Equal(plainMsg, decryptedWireData)
 }
 
-func decrypt(public PublicKeys, private PrivateKeys, wiredata WireData) []byte {
-	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private.PrivateKeyHpke)
+func GenerateKeyPair() (HybridKeyPair, error) {
+	public, private, err := kemID.Scheme().GenerateKeyPair()
 	if err != nil {
-		panic(err)
+		return HybridKeyPair{}, err
 	}
 
-	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(public.PublicKeyHpke)
+	publicData, err := public.MarshalBinary()
 	if err != nil {
-		panic(err)
+		return HybridKeyPair{}, err
+	}
+	privateData, err := private.MarshalBinary()
+	if err != nil {
+		return HybridKeyPair{}, err
 	}
 
-	suite := hpke.NewSuite(kemID, kdfID, aeadID)
+	var privateCsidh csidh.PrivateKey
+	var publicCsidh csidh.PublicKey
+	csidh.GeneratePrivateKey(&privateCsidh, rand.Reader)
+	csidh.GeneratePublicKey(&publicCsidh, &privateCsidh, rand.Reader)
 
-	receiver, err := suite.NewReceiver(privateKey, info)
-	if err != nil {
-		panic(err)
-	}
+	var privateCsidhData [37]byte
+	privateCsidh.Export(privateCsidhData[:])
 
-	psk := DeriveSecret(public.PublicKeyCsidh, private.PrivateKeyCsidh)
-	pskId := []byte("My PSK")
+	var publicCsidhData [64]byte
+	publicCsidh.Export(publicCsidhData[:])
 
-	Println("Use PSK:", base64.StdEncoding.EncodeToString(psk))
-
-	opener, err := receiver.SetupAuthPSK(wiredata.EncapsulatedKey, psk, pskId, publicKey)
-	if err != nil {
-		panic(err)
-	}
-
-	plain, err := opener.Open(wiredata.CipherText, wiredata.AssociatedData)
-	if err != nil {
-		panic(err)
-	}
-
-	return plain
+	return HybridKeyPair{
+		PublicKeys: PublicKeys{
+			PublicKeyHpke:  publicData,
+			PublicKeyCsidh: publicCsidhData[:],
+		},
+		PrivateKeys: PrivateKeys{
+			PrivateKeyHpke:  privateData,
+			PrivateKeyCsidh: privateCsidhData[:],
+		},
+	}, nil
 }
+
+
 
 func encrypt(private PrivateKeys, public PublicKeys, msg []byte) (WireData, error) {
 	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private.PrivateKeyHpke)
@@ -146,6 +157,42 @@ func encrypt(private PrivateKeys, public PublicKeys, msg []byte) (WireData, erro
 	}, nil
 }
 
+func decrypt(public PublicKeys, private PrivateKeys, wiredata WireData) []byte {
+	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private.PrivateKeyHpke)
+	if err != nil {
+		panic(err)
+	}
+
+	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(public.PublicKeyHpke)
+	if err != nil {
+		panic(err)
+	}
+
+	suite := hpke.NewSuite(kemID, kdfID, aeadID)
+
+	receiver, err := suite.NewReceiver(privateKey, info)
+	if err != nil {
+		panic(err)
+	}
+
+	psk := DeriveSecret(public.PublicKeyCsidh, private.PrivateKeyCsidh)
+	pskId := []byte("My PSK")
+
+	Println("Use PSK:", base64.StdEncoding.EncodeToString(psk))
+
+	opener, err := receiver.SetupAuthPSK(wiredata.EncapsulatedKey, psk, pskId, publicKey)
+	if err != nil {
+		panic(err)
+	}
+
+	plain, err := opener.Open(wiredata.CipherText, wiredata.AssociatedData)
+	if err != nil {
+		panic(err)
+	}
+
+	return plain
+}
+
 func DeriveSecret(publicKeyData, privateKeyData []byte) []byte {
 	var ss [64]byte
 	var privateKey csidh.PrivateKey
@@ -164,37 +211,7 @@ func DeriveSecret(publicKeyData, privateKeyData []byte) []byte {
 	return shasum[:]
 }
 
-func GenerateKeyPair() HybridKeyPair {
-	public, private, err := kemID.Scheme().GenerateKeyPair()
-	if err != nil {
-		panic(err)
-	}
 
-	publicData, _ := public.MarshalBinary()
-	privateData, _ := private.MarshalBinary()
-
-	var privateCsidh csidh.PrivateKey
-	var publicCsidh csidh.PublicKey
-	csidh.GeneratePrivateKey(&privateCsidh, rand.Reader)
-	csidh.GeneratePublicKey(&publicCsidh, &privateCsidh, rand.Reader)
-
-	var privateCsidhData [37]byte
-	privateCsidh.Export(privateCsidhData[:])
-
-	var publicCsidhData [64]byte
-	publicCsidh.Export(publicCsidhData[:])
-
-	return HybridKeyPair{
-		PublicKeys: PublicKeys{
-			PublicKeyHpke:  publicData,
-			PublicKeyCsidh: publicCsidhData[:],
-		},
-		PrivateKeys: PrivateKeys{
-			PrivateKeyHpke:  privateData,
-			PrivateKeyCsidh: privateCsidhData[:],
-		},
-	}
-}
 
 type WireData struct {
 	EncapsulatedKey []byte

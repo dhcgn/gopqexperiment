@@ -40,17 +40,20 @@ func Benchmark_GenerateKeyPair(b *testing.B) {
 }
 
 func Benchmark_encrypt(b *testing.B) {
-	privateKeys := GenerateKeyPair().PrivateKeys
-	publicKeys := GenerateKeyPair().PublicKeys
+	aliceKeys, _ := GenerateKeyPair()
+	bobKeys, _ := GenerateKeyPair()
 	msg := []byte("This is a secret Message")
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		encrypt(privateKeys, publicKeys, msg)
+		encrypt(aliceKeys.PrivateKeys, bobKeys.PublicKeys, msg)
 	}
 }
 
 func Test_encrypt(t *testing.T) {
+	aliceKeys, _ := GenerateKeyPair()
+	bobKeys, _ := GenerateKeyPair()
+
 	type args struct {
 		private PrivateKeys
 		public  PublicKeys
@@ -64,8 +67,8 @@ func Test_encrypt(t *testing.T) {
 		{
 			name: "No Error",
 			args: args{
-				private: GenerateKeyPair().PrivateKeys,
-				public:  GenerateKeyPair().PublicKeys,
+				private: aliceKeys.PrivateKeys,
+				public:  bobKeys.PublicKeys,
 				msg:     []byte("This is a secret Message"),
 			},
 			wantErr: false,

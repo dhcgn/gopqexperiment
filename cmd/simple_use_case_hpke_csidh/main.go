@@ -53,7 +53,7 @@ func mainInternal() bool {
 
 	plainMsg := []byte("This is a secret Message")
 
-	encryptedWireData, err := encrypt(aliceKeyPair.PrivateKeys, bobKeyPair.PublicKeys, plainMsg)
+	encryptedWireData, err := encrypt(aliceKeyPair, bobKeyPair.PublicKeys, plainMsg)
 	if err != nil {
 		panic(err)
 	}
@@ -66,7 +66,7 @@ func mainInternal() bool {
 	Println(string(j))
 	// Sends encryptedWireData over the wire
 
-	decryptedWireData := decrypt(aliceKeyPair.PublicKeys, bobKeyPair.PrivateKeys, encryptedWireData)
+	decryptedWireData := decrypt(encryptedWireData.SendersPublicKeys, bobKeyPair.PrivateKeys, encryptedWireData)
 
 	return bytes.Equal(plainMsg, decryptedWireData)
 }
@@ -99,25 +99,23 @@ func GenerateKeyPair() (HybridKeyPair, error) {
 
 	return HybridKeyPair{
 		PublicKeys: PublicKeys{
-			PublicKeyHpke:  publicData,
-			PublicKeyCsidh: publicCsidhData[:],
+			Hpke:  publicData,
+			Csidh: publicCsidhData[:],
 		},
 		PrivateKeys: PrivateKeys{
-			PrivateKeyHpke:  privateData,
-			PrivateKeyCsidh: privateCsidhData[:],
+			Hpke:  privateData,
+			Csidh: privateCsidhData[:],
 		},
 	}, nil
 }
 
-
-
-func encrypt(private PrivateKeys, public PublicKeys, msg []byte) (WireData, error) {
-	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private.PrivateKeyHpke)
+func encrypt(private HybridKeyPair, public PublicKeys, msg []byte) (WireData, error) {
+	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private.PrivateKeys.Hpke)
 	if err != nil {
 		return WireData{}, err
 	}
 
-	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(public.PublicKeyHpke)
+	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(public.Hpke)
 	if err != nil {
 		return WireData{}, err
 	}
@@ -129,7 +127,7 @@ func encrypt(private PrivateKeys, public PublicKeys, msg []byte) (WireData, erro
 		return WireData{}, err
 	}
 
-	psk := DeriveSecret(public.PublicKeyCsidh, private.PrivateKeyCsidh)
+	psk := DeriveSecret(public.Csidh, private.PrivateKeys.Csidh)
 	pskId := []byte("My PSK")
 
 	Println("Use PSK:", base64.StdEncoding.EncodeToString(psk))
@@ -151,19 +149,20 @@ func encrypt(private PrivateKeys, public PublicKeys, msg []byte) (WireData, erro
 	// Println(" - cipher text:", base64.StdEncoding.EncodeToString(ct))
 
 	return WireData{
-		EncapsulatedKey: enc,
-		CipherText:      ct,
-		AssociatedData:  aad,
+		EncapsulatedKey:   enc,
+		CipherText:        ct,
+		AssociatedData:    aad,
+		SendersPublicKeys: private.PublicKeys,
 	}, nil
 }
 
 func decrypt(public PublicKeys, private PrivateKeys, wiredata WireData) []byte {
-	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private.PrivateKeyHpke)
+	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private.Hpke)
 	if err != nil {
 		panic(err)
 	}
 
-	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(public.PublicKeyHpke)
+	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(public.Hpke)
 	if err != nil {
 		panic(err)
 	}
@@ -175,7 +174,7 @@ func decrypt(public PublicKeys, private PrivateKeys, wiredata WireData) []byte {
 		panic(err)
 	}
 
-	psk := DeriveSecret(public.PublicKeyCsidh, private.PrivateKeyCsidh)
+	psk := DeriveSecret(public.Csidh, private.Csidh)
 	pskId := []byte("My PSK")
 
 	Println("Use PSK:", base64.StdEncoding.EncodeToString(psk))
@@ -211,12 +210,11 @@ func DeriveSecret(publicKeyData, privateKeyData []byte) []byte {
 	return shasum[:]
 }
 
-
-
 type WireData struct {
-	EncapsulatedKey []byte
-	CipherText      []byte
-	AssociatedData  []byte
+	EncapsulatedKey   []byte
+	CipherText        []byte
+	AssociatedData    []byte
+	SendersPublicKeys PublicKeys
 }
 
 type HybridKeyPair struct {
@@ -226,18 +224,34 @@ type HybridKeyPair struct {
 
 type PublicKeys struct {
 	// kem.PublicKey
-	PublicKeyHpke []byte
+	Hpke []byte
 	// csidh.PublicKey
-	PublicKeyCsidh []byte
+	Csidh []byte
 }
 type PrivateKeys struct {
 	// kem.PrivateKey
-	PrivateKeyHpke []byte
+	Hpke []byte
 	// csidh.PrivateKey
-	PrivateKeyCsidh []byte
+	Csidh []byte
 }
 
 func (hkp HybridKeyPair) GetJson() string {
+	j, err := json.MarshalIndent(hkp, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	return string(j)
+}
+
+func (hkp PublicKeys) GetJson() string {
+	j, err := json.MarshalIndent(hkp, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	return string(j)
+}
+
+func (hkp PrivateKeys) GetJson() string {
 	j, err := json.MarshalIndent(hkp, "", "  ")
 	if err != nil {
 		panic(err)

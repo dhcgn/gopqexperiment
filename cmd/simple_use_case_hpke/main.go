@@ -50,7 +50,7 @@ func mainInternal() bool {
 
 	plainMsg := []byte("This is a secret Message")
 
-	encryptedWireData, err := encrypt(aliceKeyPair.PrivateKeys, bobKeyPair.PublicKeys, plainMsg)
+	encryptedWireData, err := encrypt(aliceKeyPair, bobKeyPair.PublicKeys, plainMsg)
 	if err != nil {
 		panic(err)
 	}
@@ -63,7 +63,7 @@ func mainInternal() bool {
 	Println(string(j))
 	// Sends encryptedWireData over the wire
 
-	decryptedWireData := decrypt(aliceKeyPair.PublicKeys, bobKeyPair.PrivateKeys, encryptedWireData)
+	decryptedWireData := decrypt(encryptedWireData.SendersPublicKeys, bobKeyPair.PrivateKeys, encryptedWireData)
 
 	return bytes.Equal(plainMsg, decryptedWireData)
 }
@@ -79,21 +79,21 @@ func GenerateKeyPair() (KeyPair, error) {
 
 	return KeyPair{
 		PublicKeys: PublicKeys{
-			PublicKeyHpke: publicRaw,
+			Hpke: publicRaw,
 		},
 		PrivateKeys: PrivateKeys{
-			PrivateKeyHpke: privateRaw,
+			Hpke: privateRaw,
 		},
 	}, nil
 }
 
-func encrypt(private PrivateKeys, public PublicKeys, msg []byte) (WireData, error) {
-	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private.PrivateKeyHpke)
+func encrypt(private KeyPair, public PublicKeys, msg []byte) (WireData, error) {
+	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private.PrivateKeys.Hpke)
 	if err != nil {
 		return WireData{}, err
 	}
 
-	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(public.PublicKeyHpke)
+	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(public.Hpke)
 	if err != nil {
 		return WireData{}, err
 	}
@@ -122,19 +122,20 @@ func encrypt(private PrivateKeys, public PublicKeys, msg []byte) (WireData, erro
 	// Println(" - cipher text:", base64.StdEncoding.EncodeToString(ct))
 
 	return WireData{
-		EncapsulatedKey: enc,
-		CipherText:      ct,
-		AssociatedData:  aad,
+		EncapsulatedKey:   enc,
+		CipherText:        ct,
+		AssociatedData:    aad,
+		SendersPublicKeys: private.PublicKeys,
 	}, nil
 }
 
 func decrypt(public PublicKeys, private PrivateKeys, wiredata WireData) []byte {
-	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private.PrivateKeyHpke)
+	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private.Hpke)
 	if err != nil {
 		panic(err)
 	}
 
-	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(public.PublicKeyHpke)
+	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(public.Hpke)
 	if err != nil {
 		panic(err)
 	}
@@ -160,9 +161,10 @@ func decrypt(public PublicKeys, private PrivateKeys, wiredata WireData) []byte {
 }
 
 type WireData struct {
-	EncapsulatedKey []byte
-	CipherText      []byte
-	AssociatedData  []byte
+	EncapsulatedKey   []byte
+	CipherText        []byte
+	AssociatedData    []byte
+	SendersPublicKeys PublicKeys
 }
 
 type KeyPair struct {
@@ -172,11 +174,11 @@ type KeyPair struct {
 
 type PublicKeys struct {
 	// kem.PublicKey
-	PublicKeyHpke []byte
+	Hpke []byte
 }
 type PrivateKeys struct {
 	// kem.PrivateKey
-	PrivateKeyHpke []byte
+	Hpke []byte
 }
 
 func (hkp KeyPair) GetJson() string {

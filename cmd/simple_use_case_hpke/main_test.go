@@ -54,7 +54,7 @@ func Benchmark_encrypt(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		encrypt(private.PrivateKeys, public.PublicKeys, msg)
+		encrypt(private, public.PublicKeys, msg)
 	}
 }
 
@@ -70,7 +70,7 @@ func Test_encrypt(t *testing.T) {
 	}
 
 	type args struct {
-		private PrivateKeys
+		private KeyPair
 		public  PublicKeys
 		msg     []byte
 	}
@@ -82,7 +82,7 @@ func Test_encrypt(t *testing.T) {
 		{
 			name: "No Error",
 			args: args{
-				private: private.PrivateKeys,
+				private: private,
 				public:  public.PublicKeys,
 				msg:     []byte("This is a secret Message"),
 			},

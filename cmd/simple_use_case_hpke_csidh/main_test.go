@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"testing"
 )
 
@@ -82,5 +83,20 @@ func Test_encrypt(t *testing.T) {
 				return
 			}
 		})
+	}
+}
+
+func Benchmark_decrypt(b *testing.B) {
+	aliceKeys, _ := GenerateKeyPair()
+	bobKeys, _ := GenerateKeyPair()
+	plain := []byte("This is a secret Message")
+	wd, _ := encrypt(aliceKeys, bobKeys.PublicKeys, plain)
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		decrypted := decrypt(wd.SendersPublicKeys, bobKeys.PrivateKeys, wd)
+		if !bytes.Equal(plain, decrypted) {
+			b.FailNow()
+		}
 	}
 }

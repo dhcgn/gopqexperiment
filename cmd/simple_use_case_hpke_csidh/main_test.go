@@ -1,6 +1,8 @@
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
 func init() {
 	printMessages = false
@@ -34,5 +36,48 @@ func Benchmark_mainInternal(b *testing.B) {
 func Benchmark_GenerateKeyPair(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		GenerateKeyPair()
+	}
+}
+
+func Benchmark_encrypt(b *testing.B) {
+	privateKeys := GenerateKeyPair().PrivateKeys
+	publicKeys := GenerateKeyPair().PublicKeys
+	msg := []byte("This is a secret Message")
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		encrypt(privateKeys, publicKeys, msg)
+	}
+}
+
+func Test_encrypt(t *testing.T) {
+	type args struct {
+		private PrivateKeys
+		public  PublicKeys
+		msg     []byte
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "No Error",
+			args: args{
+				private: GenerateKeyPair().PrivateKeys,
+				public:  GenerateKeyPair().PublicKeys,
+				msg:     []byte("This is a secret Message"),
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := encrypt(tt.args.private, tt.args.public, tt.args.msg)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("encrypt() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
 	}
 }

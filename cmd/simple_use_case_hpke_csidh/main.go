@@ -47,7 +47,10 @@ func mainInternal() bool {
 
 	plainMsg := []byte("This is a secret Message")
 
-	encryptedWireData := encrypt(aliceKeyPair.PrivateKeys, bobKeyPair.PublicKeys, plainMsg)
+	encryptedWireData, err := encrypt(aliceKeyPair.PrivateKeys, bobKeyPair.PublicKeys, plainMsg)
+	if err != nil {
+		panic(err)
+	}
 
 	// Sends encryptedWireData over the wire
 	j, err := json.MarshalIndent(encryptedWireData, "", "  ")
@@ -98,22 +101,22 @@ func decrypt(public PublicKeys, private PrivateKeys, wiredata WireData) []byte {
 	return plain
 }
 
-func encrypt(private PrivateKeys, public PublicKeys, msg []byte) WireData {
+func encrypt(private PrivateKeys, public PublicKeys, msg []byte) (WireData, error) {
 	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private.PrivateKeyHpke)
 	if err != nil {
-		panic(err)
+		return WireData{}, err
 	}
 
 	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(public.PublicKeyHpke)
 	if err != nil {
-		panic(err)
+		return WireData{}, err
 	}
 
 	suite := hpke.NewSuite(kemID, kdfID, aeadID)
 
 	sender, err := suite.NewSender(publicKey, info)
 	if err != nil {
-		panic(err)
+		return WireData{}, err
 	}
 
 	psk := DeriveSecret(public.PublicKeyCsidh, private.PrivateKeyCsidh)
@@ -123,14 +126,14 @@ func encrypt(private PrivateKeys, public PublicKeys, msg []byte) WireData {
 
 	enc, sealer, err := sender.SetupAuthPSK(rand.Reader, privateKey, psk, pskId)
 	if err != nil {
-		panic(err)
+		return WireData{}, err
 	}
 
 	// encrypts some plaintext and sends the ciphertext to Bob.
 	aad := []byte("additional public data")
 	ct, err := sealer.Seal(msg, aad)
 	if err != nil {
-		panic(err)
+		return WireData{}, err
 	}
 
 	// Println("encrypt")
@@ -141,7 +144,7 @@ func encrypt(private PrivateKeys, public PublicKeys, msg []byte) WireData {
 		EncapsulatedKey: enc,
 		CipherText:      ct,
 		AssociatedData:  aad,
-	}
+	}, nil
 }
 
 func DeriveSecret(publicKeyData, privateKeyData []byte) []byte {

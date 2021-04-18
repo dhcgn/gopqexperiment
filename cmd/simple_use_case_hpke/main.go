@@ -56,7 +56,7 @@ func mainInternal() bool {
 	bobPublicRaw, _ := bobPublic.MarshalBinary()
 	plainMsg := []byte("This is a secret Message")
 
-	encryptedWireData := encrypt(alicePrivateRaw, bobPublicRaw, plainMsg)
+	encryptedWireData, _ := encrypt(alicePrivateRaw, bobPublicRaw, plainMsg)
 
 	// Sends encryptedWireData over the wire
 	j, err := json.MarshalIndent(encryptedWireData, "", "  ")
@@ -108,34 +108,34 @@ func decrypt(public, private []byte, wiredata WireData) []byte {
 	return plain
 }
 
-func encrypt(private, public, msg []byte) WireData {
+func encrypt(private, public, msg []byte) (WireData, error) {
 	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private)
 	if err != nil {
-		panic(err)
+		return WireData{}, err
 	}
 
 	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(public)
 	if err != nil {
-		panic(err)
+		return WireData{}, err
 	}
 
 	suite := hpke.NewSuite(kemID, kdfID, aeadID)
 
 	sender, err := suite.NewSender(publicKey, info)
 	if err != nil {
-		panic(err)
+		return WireData{}, err
 	}
 
 	enc, sealer, err := sender.SetupAuth(rand.Reader, privateKey)
 	if err != nil {
-		panic(err)
+		return WireData{}, err
 	}
 
 	// encrypts some plaintext and sends the ciphertext to Bob.
 	aad := []byte("additional public data")
 	ct, err := sealer.Seal(msg, aad)
 	if err != nil {
-		panic(err)
+		return WireData{}, err
 	}
 
 	// Println("encrypt")
@@ -146,7 +146,7 @@ func encrypt(private, public, msg []byte) WireData {
 		EncapsulatedKey: enc,
 		CipherText:      ct,
 		AssociatedData:  aad,
-	}
+	}, nil
 }
 
 func printKey(binaryMarshaler encoding.BinaryMarshaler) string {

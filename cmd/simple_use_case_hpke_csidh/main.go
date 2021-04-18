@@ -19,7 +19,6 @@ var (
 	kdfID  = hpke.KDF_HKDF_SHA512
 	aeadID = hpke.AEAD_AES256GCM
 
-	// suite  = hpke.NewSuite(kemID, kdfID, aeadID)
 	info = []byte("Encrypted Content from Application XYZ")
 )
 

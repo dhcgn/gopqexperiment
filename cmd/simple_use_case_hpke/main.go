@@ -3,8 +3,6 @@ package main
 import (
 	"bytes"
 	"crypto/rand"
-	"encoding"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 
@@ -18,7 +16,6 @@ var (
 	kdfID  = hpke.KDF_HKDF_SHA512
 	aeadID = hpke.AEAD_AES256GCM
 
-	// suite  = hpke.NewSuite(kemID, kdfID, aeadID)
 	info = []byte("Encrypted Content from Application XYZ")
 )
 
@@ -155,12 +152,6 @@ func decrypt(public PublicKeys, private PrivateKeys, wiredata WireData) []byte {
 	}
 
 	return plain
-}
-
-func printKey(binaryMarshaler encoding.BinaryMarshaler) string {
-	bobPublicRaw, _ := binaryMarshaler.MarshalBinary()
-	base64 := base64.StdEncoding.EncodeToString(bobPublicRaw)
-	return base64
 }
 
 type WireData struct {

@@ -1,5 +1,9 @@
 # Go PQ Experiment
 
+[![Go](https://github.com/dhcgn/gopqexperiment/actions/workflows/go.yml/badge.svg)](https://github.com/dhcgn/gopqexperiment/actions/workflows/go.yml)
+[![CodeQL](https://github.com/dhcgn/gopqexperiment/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/dhcgn/gopqexperiment/actions/workflows/codeql-analysis.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/dhcgn/gopqexperiment)](https://goreportcard.com/report/github.com/dhcgn/gopqexperiment)
+
 Just an **experiment** repro to play around to archiv a post-quantum safe system.
 
 Warning from the used modules: We recommend to take caution before using this library in a production application since part of its content is experimental.
@@ -28,6 +32,13 @@ With the combination of the proven Advanced Encryption Standard (AES) and the re
       1. SHA-512
 4. Key Derivation Functions (KDFs)
    1. HKDF-SHA512
+
+### Use Cases
+
+- Trivial use case with HPKE for the purpose of demonstration  
+  [main/cmd/simple_use_case_hpke_csidh](https://github.com/dhcgn/gopqexperiment/tree/main/cmd/simple_use_case_hpke_csidh)
+- Trivial use case with HPKE und cSIDH for the purpose of demonstration  
+  [main/cmd/simple_use_case_hpke](https://github.com/dhcgn/gopqexperiment/tree/main/cmd/simple_use_case_hpke)
 
 ### Drawback
 

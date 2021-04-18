@@ -56,11 +56,7 @@ func mainInternal() bool {
 	}
 
 	// Sends encryptedWireData over the wire
-	j, err := json.MarshalIndent(encryptedWireData, "", "  ")
-	if err != nil {
-		panic(err)
-	}
-	Println(string(j))
+	Println(encryptedWireData.GetJson())
 	// Sends encryptedWireData over the wire
 
 	decryptedWireData := decrypt(encryptedWireData.SendersPublicKeys, bobKeyPair.PrivateKeys, encryptedWireData)
@@ -179,6 +175,14 @@ type PublicKeys struct {
 type PrivateKeys struct {
 	// kem.PrivateKey
 	Hpke []byte
+}
+
+func (wd WireData) GetJson() string {
+	j, err := json.MarshalIndent(wd, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	return string(j)
 }
 
 func (hkp KeyPair) GetJson() string {

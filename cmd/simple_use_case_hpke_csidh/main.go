@@ -12,14 +12,15 @@ import (
 	"github.com/cloudflare/circl/hpke"
 )
 
-var (
-	printMessages = true
-
+const (
 	kemID  = hpke.KEM_X448_HKDF_SHA512
 	kdfID  = hpke.KDF_HKDF_SHA512
 	aeadID = hpke.AEAD_AES256GCM
+)
 
-	info = []byte("Encrypted Content from Application XYZ")
+var (
+	printMessages = true
+	info          = []byte("Encrypted Content from Application XYZ")
 )
 
 func main() {

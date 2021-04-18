@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"github.com/cloudflare/circl/hpke"
-	"github.com/cloudflare/circl/kem"
 )
 
 var (
@@ -34,29 +33,25 @@ func mainInternal() bool {
 	Println("Generation Public Keys")
 	// ---------------
 
-	alicePublic, alicePrivate, err := GenerateKeyPair()
+	aliceKeyPair, err := GenerateKeyPair()
 	if err != nil {
 		panic(err)
 	}
-	Println(" - Alice Public: ", printKey(alicePublic))
-	Println(" - Alice Private:", printKey(alicePrivate))
+	Println(" - Alice KeyPair: ", aliceKeyPair.GetJson())
 
-	bobPublic, bobPrivate, err := GenerateKeyPair()
+	bobKeyPair, err := GenerateKeyPair()
 	if err != nil {
 		panic(err)
 	}
-	Println(" - Bob Public: ", printKey(bobPublic))
-	Println(" - Bob Private:", printKey(bobPrivate))
+	Println(" - Bob KeyPair: ", bobKeyPair.GetJson())
 
 	// ---------------
 	Println("Alice creates a message for bob")
 	// ---------------
 
-	alicePrivateRaw, _ := alicePrivate.MarshalBinary()
-	bobPublicRaw, _ := bobPublic.MarshalBinary()
 	plainMsg := []byte("This is a secret Message")
 
-	encryptedWireData, _ := encrypt(alicePrivateRaw, bobPublicRaw, plainMsg)
+	encryptedWireData, _ := encrypt(aliceKeyPair.PrivateKeys, bobKeyPair.PublicKeys, plainMsg)
 
 	// Sends encryptedWireData over the wire
 	j, err := json.MarshalIndent(encryptedWireData, "", "  ")
@@ -66,55 +61,37 @@ func mainInternal() bool {
 	Println(string(j))
 	// Sends encryptedWireData over the wire
 
-	alicePublicRaw, _ := alicePublic.MarshalBinary()
-	bobPrivateRaw, _ := bobPrivate.MarshalBinary()
-	decryptedWireData := decrypt(alicePublicRaw, bobPrivateRaw, encryptedWireData)
+	decryptedWireData := decrypt(aliceKeyPair.PublicKeys, bobKeyPair.PrivateKeys, encryptedWireData)
 
 	return bytes.Equal(plainMsg, decryptedWireData)
 }
 
-func GenerateKeyPair() (kem.PublicKey, kem.PrivateKey, error) {
-	return kemID.Scheme().GenerateKeyPair()
+func GenerateKeyPair() (KeyPair, error) {
+	publicKey, privateKey, err := kemID.Scheme().GenerateKeyPair()
+	if err != nil {
+		return KeyPair{}, err
+	}
+
+	privateRaw, _ := privateKey.MarshalBinary()
+	publicRaw, _ := publicKey.MarshalBinary()
+
+	return KeyPair{
+		PublicKeys: PublicKeys{
+			PublicKeyHpke: publicRaw,
+		},
+		PrivateKeys: PrivateKeys{
+			PrivateKeyHpke: privateRaw,
+		},
+	}, nil
 }
 
-func decrypt(public, private []byte, wiredata WireData) []byte {
-	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private)
-	if err != nil {
-		panic(err)
-	}
-
-	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(public)
-	if err != nil {
-		panic(err)
-	}
-
-	suite := hpke.NewSuite(kemID, kdfID, aeadID)
-
-	receiver, err := suite.NewReceiver(privateKey, info)
-	if err != nil {
-		panic(err)
-	}
-
-	opener, err := receiver.SetupAuth(wiredata.EncapsulatedKey, publicKey)
-	if err != nil {
-		panic(err)
-	}
-
-	plain, err := opener.Open(wiredata.CipherText, wiredata.AssociatedData)
-	if err != nil {
-		panic(err)
-	}
-
-	return plain
-}
-
-func encrypt(private, public, msg []byte) (WireData, error) {
-	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private)
+func encrypt(private PrivateKeys, public PublicKeys, msg []byte) (WireData, error) {
+	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private.PrivateKeyHpke)
 	if err != nil {
 		return WireData{}, err
 	}
 
-	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(public)
+	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(public.PublicKeyHpke)
 	if err != nil {
 		return WireData{}, err
 	}
@@ -149,6 +126,37 @@ func encrypt(private, public, msg []byte) (WireData, error) {
 	}, nil
 }
 
+func decrypt(public PublicKeys, private PrivateKeys, wiredata WireData) []byte {
+	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private.PrivateKeyHpke)
+	if err != nil {
+		panic(err)
+	}
+
+	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(public.PublicKeyHpke)
+	if err != nil {
+		panic(err)
+	}
+
+	suite := hpke.NewSuite(kemID, kdfID, aeadID)
+
+	receiver, err := suite.NewReceiver(privateKey, info)
+	if err != nil {
+		panic(err)
+	}
+
+	opener, err := receiver.SetupAuth(wiredata.EncapsulatedKey, publicKey)
+	if err != nil {
+		panic(err)
+	}
+
+	plain, err := opener.Open(wiredata.CipherText, wiredata.AssociatedData)
+	if err != nil {
+		panic(err)
+	}
+
+	return plain
+}
+
 func printKey(binaryMarshaler encoding.BinaryMarshaler) string {
 	bobPublicRaw, _ := binaryMarshaler.MarshalBinary()
 	base64 := base64.StdEncoding.EncodeToString(bobPublicRaw)
@@ -159,6 +167,28 @@ type WireData struct {
 	EncapsulatedKey []byte
 	CipherText      []byte
 	AssociatedData  []byte
+}
+
+type KeyPair struct {
+	PublicKeys  PublicKeys
+	PrivateKeys PrivateKeys
+}
+
+type PublicKeys struct {
+	// kem.PublicKey
+	PublicKeyHpke []byte
+}
+type PrivateKeys struct {
+	// kem.PrivateKey
+	PrivateKeyHpke []byte
+}
+
+func (hkp KeyPair) GetJson() string {
+	j, err := json.MarshalIndent(hkp, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	return string(j)
 }
 
 func Println(a ...interface{}) {

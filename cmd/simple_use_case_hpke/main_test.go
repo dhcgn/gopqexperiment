@@ -40,44 +40,38 @@ func Benchmark_GenerateKeyPair(b *testing.B) {
 }
 
 func Benchmark_encrypt(b *testing.B) {
-	_, private, err := GenerateKeyPair()
+	private, err := GenerateKeyPair()
 	if err != nil {
 		panic(err)
 	}
 
-	public, _, err := GenerateKeyPair()
+	public, err := GenerateKeyPair()
 	if err != nil {
 		panic(err)
 	}
-
-	alicePrivateRaw, _ := private.MarshalBinary()
-	bobPublicRaw, _ := public.MarshalBinary()
 
 	msg := []byte("This is a secret Message")
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		encrypt(alicePrivateRaw, bobPublicRaw, msg)
+		encrypt(private.PrivateKeys, public.PublicKeys, msg)
 	}
 }
 
 func Test_encrypt(t *testing.T) {
-	_, private, err := GenerateKeyPair()
+	private, err := GenerateKeyPair()
 	if err != nil {
 		panic(err)
 	}
 
-	public, _, err := GenerateKeyPair()
+	public, err := GenerateKeyPair()
 	if err != nil {
 		panic(err)
 	}
-
-	privateRaw, _ := private.MarshalBinary()
-	publicRaw, _ := public.MarshalBinary()
 
 	type args struct {
-		private []byte
-		public  []byte
+		private PrivateKeys
+		public  PublicKeys
 		msg     []byte
 	}
 	tests := []struct {
@@ -88,8 +82,8 @@ func Test_encrypt(t *testing.T) {
 		{
 			name: "No Error",
 			args: args{
-				private: publicRaw,
-				public:  privateRaw,
+				private: private.PrivateKeys,
+				public:  public.PublicKeys,
 				msg:     []byte("This is a secret Message"),
 			},
 			wantErr: false,

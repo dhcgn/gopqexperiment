@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/sha512"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 
@@ -13,14 +12,17 @@ import (
 )
 
 const (
-	kemID  = hpke.KEM_X448_HKDF_SHA512
-	kdfID  = hpke.KDF_HKDF_SHA512
+	// KEM_X448_HKDF_SHA512 is a KEM using X448 Diffie-Hellman function and
+	// HKDF with SHA-512.
+	kemID = hpke.KEM_X448_HKDF_SHA512
+	// KDF_HKDF_SHA512 is a KDF using HKDF with SHA-512.
+	kdfID = hpke.KDF_HKDF_SHA512
+	// AEAD_AES256GCM is AES-256 block cipher in Galois Counter Mode (GCM).
 	aeadID = hpke.AEAD_AES256GCM
 )
 
 var (
 	printMessages = true
-	info          = []byte("Encrypted Content from Application XYZ")
 )
 
 func main() {
@@ -49,7 +51,7 @@ func mainInternal() bool {
 	Println(" - Bob KeyPair: ", bobKeyPair.GetJson())
 
 	// ---------------
-	Println("Alice creates a message for bob")
+	Println("Alice creates a message for bob and encrypt them")
 	// ---------------
 
 	plainMsg := []byte("This is a secret Message")
@@ -62,6 +64,10 @@ func mainInternal() bool {
 	// Sends encryptedWireData over the wire
 	Println(encryptedWireData.GetJson())
 	// Sends encryptedWireData over the wire
+
+	// ---------------
+	Println("Bob decrypt the message from Alice")
+	// ---------------
 
 	decryptedWireData := decrypt(encryptedWireData.SendersPublicKeys, bobKeyPair.PrivateKeys, encryptedWireData)
 
@@ -107,6 +113,7 @@ func GenerateKeyPair() (HybridKeyPair, error) {
 }
 
 func encrypt(private HybridKeyPair, public PublicKeys, msg []byte) (WireData, error) {
+	info := "Encrypted Content from Application XYZ"
 	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private.PrivateKeys.Hpke)
 	if err != nil {
 		return WireData{}, err
@@ -119,17 +126,15 @@ func encrypt(private HybridKeyPair, public PublicKeys, msg []byte) (WireData, er
 
 	suite := hpke.NewSuite(kemID, kdfID, aeadID)
 
-	sender, err := suite.NewSender(publicKey, info)
+	sender, err := suite.NewSender(publicKey, []byte(info))
 	if err != nil {
 		return WireData{}, err
 	}
 
 	psk := DeriveSecret(public.Csidh, private.PrivateKeys.Csidh)
-	pskId := []byte("My PSK")
+	pskId := "The identifier for the PSK"
 
-	Println("Use PSK:", base64.StdEncoding.EncodeToString(psk))
-
-	enc, sealer, err := sender.SetupAuthPSK(rand.Reader, privateKey, psk, pskId)
+	enc, sealer, err := sender.SetupAuthPSK(rand.Reader, privateKey, psk, []byte(pskId))
 	if err != nil {
 		return WireData{}, err
 	}
@@ -141,11 +146,9 @@ func encrypt(private HybridKeyPair, public PublicKeys, msg []byte) (WireData, er
 		return WireData{}, err
 	}
 
-	// Println("encrypt")
-	// Println(" - encapsulated key:", base64.StdEncoding.EncodeToString(enc))
-	// Println(" - cipher text:", base64.StdEncoding.EncodeToString(ct))
-
 	return WireData{
+		Info:              info,
+		PskId:             pskId,
 		EncapsulatedKey:   enc,
 		CipherText:        ct,
 		AssociatedData:    aad,
@@ -166,17 +169,14 @@ func decrypt(public PublicKeys, private PrivateKeys, wiredata WireData) []byte {
 
 	suite := hpke.NewSuite(kemID, kdfID, aeadID)
 
-	receiver, err := suite.NewReceiver(privateKey, info)
+	receiver, err := suite.NewReceiver(privateKey, []byte(wiredata.Info))
 	if err != nil {
 		panic(err)
 	}
 
 	psk := DeriveSecret(public.Csidh, private.Csidh)
-	pskId := []byte("My PSK")
 
-	Println("Use PSK:", base64.StdEncoding.EncodeToString(psk))
-
-	opener, err := receiver.SetupAuthPSK(wiredata.EncapsulatedKey, psk, pskId, publicKey)
+	opener, err := receiver.SetupAuthPSK(wiredata.EncapsulatedKey, psk, []byte(wiredata.PskId), publicKey)
 	if err != nil {
 		panic(err)
 	}
@@ -207,7 +207,14 @@ func DeriveSecret(publicKeyData, privateKeyData []byte) []byte {
 	return shasum[:]
 }
 
+// WireData is the data which must be transferred.
+// The HPKE does not specify a wire format encoding for HPKE messages.
+// To protect the metadata see https://www.ietf.org/archive/id/draft-irtf-cfrg-hpke-08.html#name-metadata-protection
 type WireData struct {
+	// Info is a application-supplied information
+	Info string
+	// PskId is an identifier for the PSK
+	PskId             string
 	EncapsulatedKey   []byte
 	CipherText        []byte
 	AssociatedData    []byte

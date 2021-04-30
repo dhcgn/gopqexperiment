@@ -69,7 +69,7 @@ func mainInternal() bool {
 	Println("Bob decrypt the message from Alice")
 	// ---------------
 
-	decryptedWireData := decrypt(encryptedWireData.SendersPublicKeys, bobKeyPair.PrivateKeys, encryptedWireData)
+	decryptedWireData, _ := decrypt(encryptedWireData.SendersPublicKeys, bobKeyPair.PrivateKeys, encryptedWireData)
 
 	return bytes.Equal(plainMsg, decryptedWireData)
 }
@@ -156,37 +156,37 @@ func encrypt(private HybridKeyPair, public PublicKeys, msg []byte) (WireData, er
 	}, nil
 }
 
-func decrypt(public PublicKeys, private PrivateKeys, wiredata WireData) []byte {
+func decrypt(public PublicKeys, private PrivateKeys, wiredata WireData) ([]byte, error) {
 	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(private.Hpke)
 	if err != nil {
-		panic(err)
+		return []byte{}, err
 	}
 
 	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(public.Hpke)
 	if err != nil {
-		panic(err)
+		return []byte{}, err
 	}
 
 	suite := hpke.NewSuite(kemID, kdfID, aeadID)
 
 	receiver, err := suite.NewReceiver(privateKey, []byte(wiredata.Info))
 	if err != nil {
-		panic(err)
+		return []byte{}, err
 	}
 
 	psk := DeriveSecret(public.Csidh, private.Csidh)
 
 	opener, err := receiver.SetupAuthPSK(wiredata.EncapsulatedKey, psk, []byte(wiredata.PskId), publicKey)
 	if err != nil {
-		panic(err)
+		return []byte{}, err
 	}
 
 	plain, err := opener.Open(wiredata.CipherText, wiredata.AssociatedData)
 	if err != nil {
-		panic(err)
+		return []byte{}, err
 	}
 
-	return plain
+	return plain, nil
 }
 
 func DeriveSecret(publicKeyData, privateKeyData []byte) []byte {

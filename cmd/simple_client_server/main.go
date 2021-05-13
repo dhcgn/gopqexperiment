@@ -13,8 +13,14 @@ import (
 func main() {
 	messages := make(chan shared.Message)
 
-	go server.Listening(messages)
-	go client.SendMessages(messages)
+	c := client.NewClient()
+	c.Prepair()
+
+	s := server.NewServer()
+	s.Prepair()
+
+	go s.Listening(messages)
+	go c.SendMessages(messages)
 
 	WaitForCtrlC()
 }

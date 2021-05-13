@@ -18,13 +18,10 @@ func NewClient() *Client {
 }
 
 func (c Client) Prepair() {
-	kp, err := shared.GeneratedStaticKey()
-	if err != nil {
-		panic(err)
-	}
-	c.StaticKeyPair = kp
+	n := shared.Node(c)
+	n.GenerateStaticKeyPairs()
 
-	go shared.GenerateHpkeEphemeralKeyPairs(c.HpkeEphemeralKeyPairs)
+	go shared.GenerateHpkeEphemeralKeyPairsWorker(c.HpkeEphemeralKeyPairs)
 }
 
 func (c Client) SendMessages(transport chan<- shared.Message) {

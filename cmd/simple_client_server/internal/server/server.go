@@ -16,13 +16,10 @@ func NewServer() *Server {
 }
 
 func (s Server) Prepair() {
-	kp, err := shared.GeneratedStaticKey()
-	if err != nil {
-		panic(err)
-	}
-	s.StaticKeyPair = kp
+	n := shared.Node(s)
+	n.GenerateStaticKeyPairs()
 
-	go shared.GenerateHpkeEphemeralKeyPairs(s.HpkeEphemeralKeyPairs)
+	go shared.GenerateHpkeEphemeralKeyPairsWorker(s.HpkeEphemeralKeyPairs)
 }
 
 func (s Server) Listening(transport <-chan shared.Message) {

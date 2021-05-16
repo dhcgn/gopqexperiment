@@ -10,6 +10,7 @@ message Message {
      string target = 2;
      Content content = 3;
      bytes signature = 4;
+     PublicKeys sendersEd25519PublicKeys = 7;
 }    
 
 
@@ -17,15 +18,16 @@ message Content {
      int32 version = 1;
 
      string info = 2;
-     string pskid = 3;
-     bytes encapsulatedkey = 4;
-     bytes ciphertext = 5;
-     bytes associateddata = 6;
-     PublicKeys senderspublickeys = 7;
+     string pskID = 3;
+     bytes encapsulatedKey = 4;
+     bytes cipherText = 5;
+     bytes associatedData = 6;
+     PublicKeys sendersHpkePublicKeys = 7;
 }   
 
 message PublicKeys {
      int32 version = 1;
     
      bytes hpke = 2;
+     bytes ed25519 = 3;
 }   

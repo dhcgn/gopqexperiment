@@ -44,3 +44,7 @@ type PrivateKeys struct {
 	// kem.PrivateKey
 	Hpke []byte
 }
+
+func CreateEncryptedMessage() []byte {
+	return []byte("Hello")
+}

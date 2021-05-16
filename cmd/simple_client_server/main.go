@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	messages := make(chan shared.Message)
+	transport := make(chan shared.Message)
 
 	c := client.NewClient()
 	c.Prepair()
@@ -19,8 +19,8 @@ func main() {
 	s := server.NewServer()
 	s.Prepair()
 
-	go s.Listening(messages)
-	go c.SendMessages(messages)
+	go s.Listening(transport)
+	go c.SendMessages(transport, s.StaticDeriveKeyPair.PublicKeys)
 
 	WaitForCtrlC()
 }

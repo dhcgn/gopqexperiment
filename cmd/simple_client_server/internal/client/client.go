@@ -3,6 +3,7 @@ package client
 import (
 	"fmt"
 
+	"github.com/dhcgn/gopqexperiment/cmd/simple_client_server/internal/hpkehelper"
 	"github.com/dhcgn/gopqexperiment/cmd/simple_client_server/internal/shared"
 )
 
@@ -24,11 +25,13 @@ func (c Client) Prepair() {
 	go shared.GenerateHpkeEphemeralKeyPairsWorker(c.HpkeEphemeralKeyPairs)
 }
 
-func (c Client) SendMessages(transport chan<- shared.Message) {
+func (c Client) SendMessages(transport chan<- shared.Message, pub hpkehelper.PublicKeys) {
 	response := make(chan []byte)
 
+	protobuf := hpkehelper.CreateEncryptedMessage()
+
 	msg := shared.Message{
-		Protobuf: []byte("Hello"),
+		Protobuf: protobuf,
 		Respond:  response,
 	}
 

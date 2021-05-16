@@ -84,7 +84,7 @@ func Decrypt(content protos.Content, privateHpkeKey []byte) ([]byte, error) {
 	return plain, nil
 }
 
-func CreateEncryptedMessage(senderHpke HpkeEphemeralKeyPair, senderEd25519 shared.StaticKeyPair, recipientHpke PublicKeys, msg []byte) ([]byte, error) {
+func CreateEncryptedMessage(senderHpke HpkeEphemeralKeyPair, senderEd25519 shared.StaticKeyPair, recipientHpke []byte, msg []byte) ([]byte, error) {
 	info := "Encrypted Content from Application XYZ"
 
 	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(senderHpke.KeyPair.PrivateKeys.Hpke)
@@ -92,7 +92,7 @@ func CreateEncryptedMessage(senderHpke HpkeEphemeralKeyPair, senderEd25519 share
 		return nil, err
 	}
 
-	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(recipientHpke.Hpke)
+	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(recipientHpke)
 	if err != nil {
 		return nil, err
 	}

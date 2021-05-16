@@ -20,16 +20,16 @@ const (
 	aeadID = hpke.AEAD_AES256GCM
 )
 
-func GenerateKeyPair() (StaticHpkeKeyPair, error) {
+func GenerateKeyPair() (EncryptionKeyPair, error) {
 	publicKey, privateKey, err := kemID.Scheme().GenerateKeyPair()
 	if err != nil {
-		return StaticHpkeKeyPair{}, err
+		return EncryptionKeyPair{}, err
 	}
 
 	privateRaw, _ := privateKey.MarshalBinary()
 	publicRaw, _ := publicKey.MarshalBinary()
 
-	return StaticHpkeKeyPair{
+	return EncryptionKeyPair{
 		PublicKeys: PublicKeys{
 			Hpke: publicRaw,
 		},
@@ -39,7 +39,7 @@ func GenerateKeyPair() (StaticHpkeKeyPair, error) {
 	}, nil
 }
 
-type StaticHpkeKeyPair struct {
+type EncryptionKeyPair struct {
 	PublicKeys  PublicKeys
 	PrivateKeys PrivateKeys
 }
@@ -87,7 +87,7 @@ func Decrypt(content protos.Content, privateHpkeKey []byte) ([]byte, error) {
 func CreateEncryptedMessage(senderHpke EphemeralKeyPair, senderEd25519 StaticSigningKeyPair, recipientHpke []byte, msg []byte) ([]byte, error) {
 	info := "Encrypted Content from Application XYZ"
 
-	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(senderHpke.KeyPair.PrivateKeys.Hpke)
+	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(senderHpke.EncryptionKeyPair.PrivateKeys.Hpke)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +124,7 @@ func CreateEncryptedMessage(senderHpke EphemeralKeyPair, senderEd25519 StaticSig
 		AssociatedData:  aad,
 		SendersHpkePublicKeys: &protos.PublicKeys{
 			Version: 1,
-			Hpke:    senderHpke.KeyPair.PublicKeys.Hpke,
+			Hpke:    senderHpke.EncryptionKeyPair.PublicKeys.Hpke,
 			Ed25519: senderEd25519.PublicKey,
 		},
 	}
@@ -136,7 +136,7 @@ func CreateEncryptedMessage(senderHpke EphemeralKeyPair, senderEd25519 StaticSig
 
 	signature := ed25519.Sign(senderEd25519.PrivateKey, contentData)
 
-	protbufMessage := &protos.Message{
+	protobufMessage := &protos.Message{
 		Version:     1,
 		Target:      "MyTarget",
 		ContentData: contentData,
@@ -147,9 +147,9 @@ func CreateEncryptedMessage(senderHpke EphemeralKeyPair, senderEd25519 StaticSig
 			Ed25519: senderEd25519.PublicKey,
 		},
 	}
-	protbufMessage.ProtoMessage()
+	protobufMessage.ProtoMessage()
 
-	data, err := proto.Marshal(protbufMessage)
+	data, err := proto.Marshal(protobufMessage)
 
 	return data, err
 }
@@ -163,10 +163,10 @@ func VerifyAndDecrypt(transportData []byte, privateHpke []byte) (hpke []byte, pl
 		panic(err)
 	}
 
-	verifed := ed25519.Verify(protoMessage.GetSendersEd25519PublicKeys().Ed25519, protoMessage.ContentData, protoMessage.Signature)
-	fmt.Println("Client", "verify", verifed)
+	verified := ed25519.Verify(protoMessage.GetSendersEd25519PublicKeys().Ed25519, protoMessage.ContentData, protoMessage.Signature)
+	fmt.Println("Client", "Signature", verified)
 
-	if !verifed {
+	if !verified {
 		panic("Signature invalid")
 	}
 

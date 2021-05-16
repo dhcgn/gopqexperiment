@@ -5,7 +5,7 @@ import (
 )
 
 type EphemeralKeyPair struct {
-	KeyPair StaticHpkeKeyPair
+	EncryptionKeyPair EncryptionKeyPair
 }
 
 var counter = 1
@@ -18,7 +18,7 @@ func GenerateHpkeEphemeralKeyPairsWorker(hpkes chan<- EphemeralKeyPair) {
 		}
 
 		hpkes <- EphemeralKeyPair{
-			KeyPair: kp,
+			EncryptionKeyPair: kp,
 		}
 
 		fmt.Println("GenerateHpkeEphemeralKeyPairs", counter)

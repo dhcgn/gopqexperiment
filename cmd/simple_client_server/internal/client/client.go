@@ -19,7 +19,7 @@ func NewClient() *Client {
 	}
 }
 
-func (c *Client) Prepair() {
+func (c *Client) Prepare() {
 	n := cryptohelper.Node(*c)
 	n.GenerateStaticKeyPairs()
 
@@ -59,7 +59,7 @@ func (c Client) SendMessages(transport chan<- shared.Message, pub cryptohelper.P
 		duration := serverDateTime.Sub(startDateTime)
 		fmt.Println("Server", "Duration", duration)
 
-	}(keyPair.KeyPair.PrivateKeys.Hpke)
+	}(keyPair.EncryptionKeyPair.PrivateKeys.Hpke)
 
 	fmt.Println("Client", "Send message of length", len(transportData.Protobuf))
 	transport <- transportData

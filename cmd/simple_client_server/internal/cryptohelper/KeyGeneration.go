@@ -6,7 +6,6 @@ import (
 )
 
 func GeneratedStaticKey() (StaticSigningKeyPair, error) {
-
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 
 	return StaticSigningKeyPair{pub, priv}, err

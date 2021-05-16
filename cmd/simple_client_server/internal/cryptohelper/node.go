@@ -2,7 +2,7 @@ package cryptohelper
 
 type Node struct {
 	StaticSigningKeyPair  StaticSigningKeyPair
-	StaticHpkeKeyPair     StaticHpkeKeyPair
+	StaticHpkeKeyPair     EncryptionKeyPair
 	EphemeralHpkeKeyPairs chan EphemeralKeyPair
 }
 

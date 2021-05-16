@@ -14,7 +14,7 @@ func main() {
 	transport := make(chan shared.Message)
 
 	c := client.NewClient()
-	c.Prepair()
+	c.Prepare()
 
 	s := server.NewServer()
 	s.Prepair()

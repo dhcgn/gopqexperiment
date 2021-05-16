@@ -9,26 +9,28 @@ import (
 
 var ()
 
-type Client shared.Node
+type Client hpkehelper.Node
 
 func NewClient() *Client {
-	hpkes := make(chan shared.HpkeEphemeralKeyPair, 3)
+	hpkes := make(chan hpkehelper.HpkeEphemeralKeyPair, 3)
 	return &Client{
 		HpkeEphemeralKeyPairs: hpkes,
 	}
 }
 
 func (c Client) Prepair() {
-	n := shared.Node(c)
+	n := hpkehelper.Node(c)
 	n.GenerateStaticKeyPairs()
 
-	go shared.GenerateHpkeEphemeralKeyPairsWorker(c.HpkeEphemeralKeyPairs)
+	go hpkehelper.GenerateHpkeEphemeralKeyPairsWorker(c.HpkeEphemeralKeyPairs)
 }
 
 func (c Client) SendMessages(transport chan<- shared.Message, pub hpkehelper.PublicKeys) {
 	response := make(chan []byte)
 
-	protobuf := hpkehelper.CreateEncryptedMessage()
+	// Read a HpkeEphemeralKeyPair, so a new one is generated in the backgroudn
+	//protobuf := hpkehelper.CreateEncryptedMessage(<-c.HpkeEphemeralKeyPairs, c.StaticSigningKeyPair, pub)
+	protobuf := hpkehelper.CreateEncryptedMessage(<-c.HpkeEphemeralKeyPairs, c.StaticSigningKeyPair, pub)
 
 	msg := shared.Message{
 		Protobuf: protobuf,

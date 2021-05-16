@@ -3,23 +3,24 @@ package server
 import (
 	"fmt"
 
+	"github.com/dhcgn/gopqexperiment/cmd/simple_client_server/internal/hpkehelper"
 	"github.com/dhcgn/gopqexperiment/cmd/simple_client_server/internal/shared"
 )
 
-type Server shared.Node
+type Server hpkehelper.Node
 
 func NewServer() *Server {
-	hpkes := make(chan shared.HpkeEphemeralKeyPair, 3)
+	hpkes := make(chan hpkehelper.HpkeEphemeralKeyPair, 3)
 	return &Server{
 		HpkeEphemeralKeyPairs: hpkes,
 	}
 }
 
 func (s Server) Prepair() {
-	n := shared.Node(s)
+	n := hpkehelper.Node(s)
 	n.GenerateStaticKeyPairs()
 
-	go shared.GenerateHpkeEphemeralKeyPairsWorker(s.HpkeEphemeralKeyPairs)
+	go hpkehelper.GenerateHpkeEphemeralKeyPairsWorker(s.HpkeEphemeralKeyPairs)
 }
 
 func (s Server) Listening(transport <-chan shared.Message) {

@@ -1,6 +1,9 @@
 package hpkehelper
 
-import "github.com/cloudflare/circl/hpke"
+import (
+	"github.com/cloudflare/circl/hpke"
+	"github.com/dhcgn/gopqexperiment/cmd/simple_client_server/internal/shared"
+)
 
 const (
 	// KEM_X448_HKDF_SHA512 is a KEM using X448 Diffie-Hellman function and
@@ -45,6 +48,7 @@ type PrivateKeys struct {
 	Hpke []byte
 }
 
-func CreateEncryptedMessage() []byte {
+//"github.com/dhcgn/gopqexperiment/cmd/simple_client_server/internal/shared"
+func CreateEncryptedMessage(sourceHpke HpkeEphemeralKeyPair, sourceEd25519 shared.StaticKeyPair, targetHpke PublicKeys) []byte {
 	return []byte("Hello")
 }

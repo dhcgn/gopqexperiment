@@ -20,7 +20,7 @@ func main() {
 	s.Prepair()
 
 	go s.Listening(transport)
-	go c.SendMessages(transport, s.StaticDeriveKeyPair.PublicKeys)
+	go c.SendMessages(transport, s.HpkeStaticKeyPair.PublicKeys)
 
 	WaitForCtrlC()
 }

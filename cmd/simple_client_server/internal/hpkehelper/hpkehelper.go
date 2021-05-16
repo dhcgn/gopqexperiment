@@ -110,20 +110,11 @@ func CreateEncryptedMessage(senderHpke HpkeEphemeralKeyPair, senderEd25519 share
 		return nil, err
 	}
 
-	// encrypts some plaintext and sends the ciphertext to Bob.
 	aad := []byte("additional public data")
 	ct, err := sealer.Seal(msg, aad)
 	if err != nil {
 		return nil, err
 	}
-
-	// return WireData{
-	// 	Info:              info,
-	// 	EncapsulatedKey:   enc,
-	// 	CipherText:        ct,
-	// 	AssociatedData:    aad,
-	// 	SendersPublicKeys: private.PublicKeys,
-	// }, nil
 
 	content := &protos.Content{
 		Version:         1,

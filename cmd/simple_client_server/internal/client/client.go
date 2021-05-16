@@ -13,9 +13,9 @@ var ()
 type Client cryptohelper.Node
 
 func NewClient() *Client {
-	hpkes := make(chan cryptohelper.HpkeEphemeralKeyPair, 3)
+	hpkes := make(chan cryptohelper.EphemeralKeyPair, 3)
 	return &Client{
-		HpkeEphemeralKeyPairs: hpkes,
+		EphemeralHpkeKeyPairs: hpkes,
 	}
 }
 
@@ -23,19 +23,19 @@ func (c *Client) Prepair() {
 	n := cryptohelper.Node(*c)
 	n.GenerateStaticKeyPairs()
 
-	c.HpkeStaticKeyPair = n.HpkeStaticKeyPair
+	c.StaticHpkeKeyPair = n.StaticHpkeKeyPair
 	c.StaticSigningKeyPair = n.StaticSigningKeyPair
 
-	go cryptohelper.GenerateHpkeEphemeralKeyPairsWorker(c.HpkeEphemeralKeyPairs)
+	go cryptohelper.GenerateHpkeEphemeralKeyPairsWorker(c.EphemeralHpkeKeyPairs)
 }
 
 func (c Client) SendMessages(transport chan<- shared.Message, pub cryptohelper.PublicKeys) {
 	response := make(chan []byte)
 
-	// Read a HpkeEphemeralKeyPair, so a new one is generated in the backgroudn
-	//protobuf := hpkehelper.CreateEncryptedMessage(<-c.HpkeEphemeralKeyPairs, c.StaticSigningKemsgyPair, pub)
+	// Read a EphemeralKeyPair, so a new one is generated in the backgroudn
+	//protobuf := hpkehelper.CreateEncryptedMessage(<-c.EphemeralHpkeKeyPairs, c.StaticSigningKemsgyPair, pub)
 	msg := []byte(time.Now().Format(time.RFC3339Nano))
-	keyPair := <-c.HpkeEphemeralKeyPairs
+	keyPair := <-c.EphemeralHpkeKeyPairs
 	protobuf, err := cryptohelper.CreateEncryptedMessage(keyPair, c.StaticSigningKeyPair, pub.Hpke, msg)
 	if err != nil {
 		panic(err)

@@ -1,9 +1,9 @@
 package cryptohelper
 
 type Node struct {
-	StaticSigningKeyPair  StaticKeyPair
-	HpkeStaticKeyPair     KeyPair
-	HpkeEphemeralKeyPairs chan HpkeEphemeralKeyPair
+	StaticSigningKeyPair  StaticSigningKeyPair
+	StaticHpkeKeyPair     StaticHpkeKeyPair
+	EphemeralHpkeKeyPairs chan EphemeralKeyPair
 }
 
 func (s *Node) GenerateStaticKeyPairs() {
@@ -18,5 +18,5 @@ func (s *Node) GenerateStaticKeyPairs() {
 		panic(err)
 	}
 
-	s.HpkeStaticKeyPair = kpDerive
+	s.StaticHpkeKeyPair = kpDerive
 }

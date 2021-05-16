@@ -20,16 +20,16 @@ const (
 	aeadID = hpke.AEAD_AES256GCM
 )
 
-func GenerateKeyPair() (KeyPair, error) {
+func GenerateKeyPair() (StaticHpkeKeyPair, error) {
 	publicKey, privateKey, err := kemID.Scheme().GenerateKeyPair()
 	if err != nil {
-		return KeyPair{}, err
+		return StaticHpkeKeyPair{}, err
 	}
 
 	privateRaw, _ := privateKey.MarshalBinary()
 	publicRaw, _ := publicKey.MarshalBinary()
 
-	return KeyPair{
+	return StaticHpkeKeyPair{
 		PublicKeys: PublicKeys{
 			Hpke: publicRaw,
 		},
@@ -39,7 +39,7 @@ func GenerateKeyPair() (KeyPair, error) {
 	}, nil
 }
 
-type KeyPair struct {
+type StaticHpkeKeyPair struct {
 	PublicKeys  PublicKeys
 	PrivateKeys PrivateKeys
 }
@@ -84,7 +84,7 @@ func Decrypt(content protos.Content, privateHpkeKey []byte) ([]byte, error) {
 	return plain, nil
 }
 
-func CreateEncryptedMessage(senderHpke HpkeEphemeralKeyPair, senderEd25519 StaticKeyPair, recipientHpke []byte, msg []byte) ([]byte, error) {
+func CreateEncryptedMessage(senderHpke EphemeralKeyPair, senderEd25519 StaticSigningKeyPair, recipientHpke []byte, msg []byte) ([]byte, error) {
 	info := "Encrypted Content from Application XYZ"
 
 	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(senderHpke.KeyPair.PrivateKeys.Hpke)

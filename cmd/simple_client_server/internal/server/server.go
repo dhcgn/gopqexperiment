@@ -11,9 +11,9 @@ import (
 type Server cryptohelper.Node
 
 func NewServer() *Server {
-	hpkes := make(chan cryptohelper.HpkeEphemeralKeyPair, 3)
+	hpkes := make(chan cryptohelper.EphemeralKeyPair, 3)
 	return &Server{
-		HpkeEphemeralKeyPairs: hpkes,
+		EphemeralHpkeKeyPairs: hpkes,
 	}
 }
 
@@ -21,15 +21,15 @@ func (s *Server) Prepair() {
 	n := cryptohelper.Node(*s)
 	n.GenerateStaticKeyPairs()
 
-	s.HpkeStaticKeyPair = n.HpkeStaticKeyPair
+	s.StaticHpkeKeyPair = n.StaticHpkeKeyPair
 	s.StaticSigningKeyPair = n.StaticSigningKeyPair
 
-	go cryptohelper.GenerateHpkeEphemeralKeyPairsWorker(s.HpkeEphemeralKeyPairs)
+	go cryptohelper.GenerateHpkeEphemeralKeyPairsWorker(s.EphemeralHpkeKeyPairs)
 }
 
 func (s Server) Listening(transport <-chan shared.Message) {
 	for tran := range transport {
-		hpke, plain := cryptohelper.VerifyAndDecrypt(tran.Protobuf, s.HpkeStaticKeyPair.PrivateKeys.Hpke)
+		hpke, plain := cryptohelper.VerifyAndDecrypt(tran.Protobuf, s.StaticHpkeKeyPair.PrivateKeys.Hpke)
 
 		fmt.Println("Server", "Got Message", string(plain))
 
@@ -39,7 +39,7 @@ func (s Server) Listening(transport <-chan shared.Message) {
 		duration := serverDateTime.Sub(startDateTime)
 		fmt.Println("Server", "Duration", duration)
 
-		protobuf, err := cryptohelper.CreateEncryptedMessage(<-s.HpkeEphemeralKeyPairs, s.StaticSigningKeyPair, hpke, []byte(time.Now().Format(time.RFC3339Nano)))
+		protobuf, err := cryptohelper.CreateEncryptedMessage(<-s.EphemeralHpkeKeyPairs, s.StaticSigningKeyPair, hpke, []byte(time.Now().Format(time.RFC3339Nano)))
 		if err != nil {
 			panic(err)
 		}

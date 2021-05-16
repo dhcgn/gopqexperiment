@@ -5,14 +5,14 @@ import (
 	"crypto/rand"
 )
 
-func GeneratedStaticKey() (StaticKeyPair, error) {
+func GeneratedStaticKey() (StaticSigningKeyPair, error) {
 
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 
-	return StaticKeyPair{pub, priv}, err
+	return StaticSigningKeyPair{pub, priv}, err
 }
 
-type StaticKeyPair struct {
+type StaticSigningKeyPair struct {
 	PublicKey  ed25519.PublicKey
 	PrivateKey ed25519.PrivateKey
 }

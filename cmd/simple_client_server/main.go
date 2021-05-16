@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"sync"
@@ -18,6 +19,8 @@ func main() {
 
 	s := server.NewServer()
 	s.Prepair()
+
+	fmt.Println("s.HpkeStaticKeyPair.PublicKeys)", s.HpkeStaticKeyPair.PublicKeys)
 
 	go s.Listening(transport)
 	go c.SendMessages(transport, s.HpkeStaticKeyPair.PublicKeys)

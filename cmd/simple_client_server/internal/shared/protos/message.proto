@@ -2,7 +2,7 @@ syntax = "proto3";
 package hpke_simple_client_server;
 
 
-option go_package = "/";
+option go_package = "../protos";
 
 message Message {
      int32 version = 1;

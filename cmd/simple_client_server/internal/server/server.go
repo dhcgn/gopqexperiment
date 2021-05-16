@@ -16,9 +16,11 @@ func NewServer() *Server {
 	}
 }
 
-func (s Server) Prepair() {
-	n := hpkehelper.Node(s)
+func (s *Server) Prepair() {
+	n := hpkehelper.Node(*s)
 	n.GenerateStaticKeyPairs()
+
+	s.HpkeStaticKeyPair = n.HpkeStaticKeyPair
 
 	go hpkehelper.GenerateHpkeEphemeralKeyPairsWorker(s.HpkeEphemeralKeyPairs)
 }

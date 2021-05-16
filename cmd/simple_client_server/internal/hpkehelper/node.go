@@ -8,7 +8,7 @@ type Node struct {
 	HpkeEphemeralKeyPairs chan HpkeEphemeralKeyPair
 }
 
-func (s Node) GenerateStaticKeyPairs() {
+func (s *Node) GenerateStaticKeyPairs() {
 	kp, err := shared.GeneratedStaticKey()
 	if err != nil {
 		panic(err)

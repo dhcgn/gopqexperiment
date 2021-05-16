@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/dhcgn/gopqexperiment/cmd/simple_client_server/internal/hpkehelper"
 	"github.com/dhcgn/gopqexperiment/cmd/simple_client_server/internal/shared"
@@ -29,10 +30,14 @@ func (c Client) SendMessages(transport chan<- shared.Message, pub hpkehelper.Pub
 	response := make(chan []byte)
 
 	// Read a HpkeEphemeralKeyPair, so a new one is generated in the backgroudn
-	//protobuf := hpkehelper.CreateEncryptedMessage(<-c.HpkeEphemeralKeyPairs, c.StaticSigningKeyPair, pub)
-	protobuf := hpkehelper.CreateEncryptedMessage(<-c.HpkeEphemeralKeyPairs, c.StaticSigningKeyPair, pub)
+	//protobuf := hpkehelper.CreateEncryptedMessage(<-c.HpkeEphemeralKeyPairs, c.StaticSigningKemsgyPair, pub)
+	msg := []byte(time.Now().Format("RFC3339Nano"))
+	protobuf, err := hpkehelper.CreateEncryptedMessage(<-c.HpkeEphemeralKeyPairs, c.StaticSigningKeyPair, pub, msg)
+	if err != nil {
+		panic(err)
+	}
 
-	msg := shared.Message{
+	transportData := shared.Message{
 		Protobuf: protobuf,
 		Respond:  response,
 	}
@@ -42,8 +47,8 @@ func (c Client) SendMessages(transport chan<- shared.Message, pub hpkehelper.Pub
 		fmt.Println("Client", "Got response", string(resp))
 	}()
 
-	fmt.Println("Client", "Send message", string(msg.Protobuf))
-	transport <- msg
+	fmt.Println("Client", "Send message of length", len(transportData.Protobuf))
+	transport <- transportData
 
 	fmt.Println("Client", "Waiting ...")
 }

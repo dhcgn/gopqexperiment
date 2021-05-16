@@ -18,6 +18,12 @@
             "mode": "auto",
             "program": "${workspaceFolder}/cmd/simple_use_case_hpke_csidh"
         },
-
+        {
+            "name": "Launch simple_client_server",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/simple_client_server"
+        },
     ]
 }

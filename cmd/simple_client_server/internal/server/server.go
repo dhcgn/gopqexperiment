@@ -1,14 +1,11 @@
 package server
 
 import (
-	"crypto/ed25519"
 	"fmt"
 	"time"
 
 	"github.com/dhcgn/gopqexperiment/cmd/simple_client_server/internal/hpkehelper"
 	"github.com/dhcgn/gopqexperiment/cmd/simple_client_server/internal/shared"
-	"github.com/dhcgn/gopqexperiment/cmd/simple_client_server/internal/shared/protos"
-	"google.golang.org/protobuf/proto"
 )
 
 type Server hpkehelper.Node
@@ -32,7 +29,7 @@ func (s *Server) Prepair() {
 
 func (s Server) Listening(transport <-chan shared.Message) {
 	for tran := range transport {
-		hpke, plain := VerifyAndDecrypt(tran.Protobuf, s)
+		hpke, plain := hpkehelper.VerifyAndDecrypt(tran.Protobuf, s.HpkeStaticKeyPair.PrivateKeys.Hpke)
 
 		fmt.Println("Server", "Got Message", string(plain))
 
@@ -49,32 +46,4 @@ func (s Server) Listening(transport <-chan shared.Message) {
 
 		tran.Respond <- protobuf
 	}
-}
-
-func VerifyAndDecrypt(transportData []byte, s Server) ([]byte, []byte) {
-	fmt.Println("Server", "receive data with length", len(transportData))
-
-	var protoMessage protos.Message
-	err := proto.Unmarshal(transportData, &protoMessage)
-	if err != nil {
-		panic(err)
-	}
-
-	verifed := ed25519.Verify(protoMessage.GetSendersEd25519PublicKeys().Ed25519, protoMessage.ContentData, protoMessage.Signature)
-	fmt.Println("Server", "verify", verifed)
-
-	if !verifed {
-		panic("Signature invalid")
-	}
-
-	var protoContent protos.Content
-	if err := proto.Unmarshal(protoMessage.ContentData, &protoContent); err != nil {
-		panic(err)
-	}
-
-	plain, err := hpkehelper.Decrypt(protoContent, s.HpkeStaticKeyPair.PrivateKeys.Hpke)
-	if err != nil {
-		panic(err)
-	}
-	return protoContent.SendersHpkePublicKeys.Hpke, plain
 }

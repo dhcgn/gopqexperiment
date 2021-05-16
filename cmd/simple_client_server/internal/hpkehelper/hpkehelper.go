@@ -3,6 +3,7 @@ package hpkehelper
 import (
 	"crypto/ed25519"
 	"crypto/rand"
+	"fmt"
 
 	"github.com/cloudflare/circl/hpke"
 	"github.com/dhcgn/gopqexperiment/cmd/simple_client_server/internal/shared"
@@ -161,4 +162,32 @@ func CreateEncryptedMessage(senderHpke HpkeEphemeralKeyPair, senderEd25519 share
 	data, err := proto.Marshal(protbufMessage)
 
 	return data, err
+}
+
+func VerifyAndDecrypt(transportData []byte, privateHpke []byte) (hpke []byte, plain []byte) {
+	fmt.Println("Client", "receive data with length", len(transportData))
+
+	var protoMessage protos.Message
+	err := proto.Unmarshal(transportData, &protoMessage)
+	if err != nil {
+		panic(err)
+	}
+
+	verifed := ed25519.Verify(protoMessage.GetSendersEd25519PublicKeys().Ed25519, protoMessage.ContentData, protoMessage.Signature)
+	fmt.Println("Client", "verify", verifed)
+
+	if !verifed {
+		panic("Signature invalid")
+	}
+
+	var protoContent protos.Content
+	if err := proto.Unmarshal(protoMessage.ContentData, &protoContent); err != nil {
+		panic(err)
+	}
+
+	plain, err = Decrypt(protoContent, privateHpke)
+	if err != nil {
+		panic(err)
+	}
+	return protoContent.SendersHpkePublicKeys.Hpke, plain
 }

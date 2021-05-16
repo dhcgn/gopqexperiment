@@ -18,11 +18,8 @@ func NewServer() *Server {
 }
 
 func (s *Server) Prepair() {
-	n := cryptohelper.Node(*s)
+	n := (*cryptohelper.Node)(s)
 	n.GenerateStaticKeyPairs()
-
-	s.StaticHpkeKeyPair = n.StaticHpkeKeyPair
-	s.StaticSigningKeyPair = n.StaticSigningKeyPair
 
 	go cryptohelper.GenerateHpkeEphemeralKeyPairsWorker(s.EphemeralHpkeKeyPairs)
 }

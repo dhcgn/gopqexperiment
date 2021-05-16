@@ -20,11 +20,8 @@ func NewClient() *Client {
 }
 
 func (c *Client) Prepare() {
-	n := cryptohelper.Node(*c)
+	n := (*cryptohelper.Node)(c)
 	n.GenerateStaticKeyPairs()
-
-	c.StaticHpkeKeyPair = n.StaticHpkeKeyPair
-	c.StaticSigningKeyPair = n.StaticSigningKeyPair
 
 	go cryptohelper.GenerateHpkeEphemeralKeyPairsWorker(c.EphemeralHpkeKeyPairs)
 }

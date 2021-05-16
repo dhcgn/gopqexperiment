@@ -1,4 +1,4 @@
-package hpkehelper
+package cryptohelper
 
 import (
 	"fmt"

@@ -1,4 +1,4 @@
-package shared
+package cryptohelper
 
 import (
 	"crypto/ed25519"

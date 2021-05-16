@@ -1,15 +1,13 @@
-package hpkehelper
-
-import "github.com/dhcgn/gopqexperiment/cmd/simple_client_server/internal/shared"
+package cryptohelper
 
 type Node struct {
-	StaticSigningKeyPair  shared.StaticKeyPair
+	StaticSigningKeyPair  StaticKeyPair
 	HpkeStaticKeyPair     KeyPair
 	HpkeEphemeralKeyPairs chan HpkeEphemeralKeyPair
 }
 
 func (s *Node) GenerateStaticKeyPairs() {
-	kp, err := shared.GeneratedStaticKey()
+	kp, err := GeneratedStaticKey()
 	if err != nil {
 		panic(err)
 	}

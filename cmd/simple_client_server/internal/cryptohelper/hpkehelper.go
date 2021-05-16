@@ -1,4 +1,4 @@
-package hpkehelper
+package cryptohelper
 
 import (
 	"crypto/ed25519"
@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/cloudflare/circl/hpke"
-	"github.com/dhcgn/gopqexperiment/cmd/simple_client_server/internal/shared"
 	"github.com/dhcgn/gopqexperiment/cmd/simple_client_server/internal/shared/protos"
 	"google.golang.org/protobuf/proto"
 )
@@ -85,7 +84,7 @@ func Decrypt(content protos.Content, privateHpkeKey []byte) ([]byte, error) {
 	return plain, nil
 }
 
-func CreateEncryptedMessage(senderHpke HpkeEphemeralKeyPair, senderEd25519 shared.StaticKeyPair, recipientHpke []byte, msg []byte) ([]byte, error) {
+func CreateEncryptedMessage(senderHpke HpkeEphemeralKeyPair, senderEd25519 StaticKeyPair, recipientHpke []byte, msg []byte) ([]byte, error) {
 	info := "Encrypted Content from Application XYZ"
 
 	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(senderHpke.KeyPair.PrivateKeys.Hpke)

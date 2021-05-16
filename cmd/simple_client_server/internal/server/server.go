@@ -4,32 +4,32 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dhcgn/gopqexperiment/cmd/simple_client_server/internal/hpkehelper"
+	"github.com/dhcgn/gopqexperiment/cmd/simple_client_server/internal/cryptohelper"
 	"github.com/dhcgn/gopqexperiment/cmd/simple_client_server/internal/shared"
 )
 
-type Server hpkehelper.Node
+type Server cryptohelper.Node
 
 func NewServer() *Server {
-	hpkes := make(chan hpkehelper.HpkeEphemeralKeyPair, 3)
+	hpkes := make(chan cryptohelper.HpkeEphemeralKeyPair, 3)
 	return &Server{
 		HpkeEphemeralKeyPairs: hpkes,
 	}
 }
 
 func (s *Server) Prepair() {
-	n := hpkehelper.Node(*s)
+	n := cryptohelper.Node(*s)
 	n.GenerateStaticKeyPairs()
 
 	s.HpkeStaticKeyPair = n.HpkeStaticKeyPair
 	s.StaticSigningKeyPair = n.StaticSigningKeyPair
 
-	go hpkehelper.GenerateHpkeEphemeralKeyPairsWorker(s.HpkeEphemeralKeyPairs)
+	go cryptohelper.GenerateHpkeEphemeralKeyPairsWorker(s.HpkeEphemeralKeyPairs)
 }
 
 func (s Server) Listening(transport <-chan shared.Message) {
 	for tran := range transport {
-		hpke, plain := hpkehelper.VerifyAndDecrypt(tran.Protobuf, s.HpkeStaticKeyPair.PrivateKeys.Hpke)
+		hpke, plain := cryptohelper.VerifyAndDecrypt(tran.Protobuf, s.HpkeStaticKeyPair.PrivateKeys.Hpke)
 
 		fmt.Println("Server", "Got Message", string(plain))
 
@@ -39,7 +39,7 @@ func (s Server) Listening(transport <-chan shared.Message) {
 		duration := serverDateTime.Sub(startDateTime)
 		fmt.Println("Server", "Duration", duration)
 
-		protobuf, err := hpkehelper.CreateEncryptedMessage(<-s.HpkeEphemeralKeyPairs, s.StaticSigningKeyPair, hpke, []byte(time.Now().Format(time.RFC3339Nano)))
+		protobuf, err := cryptohelper.CreateEncryptedMessage(<-s.HpkeEphemeralKeyPairs, s.StaticSigningKeyPair, hpke, []byte(time.Now().Format(time.RFC3339Nano)))
 		if err != nil {
 			panic(err)
 		}

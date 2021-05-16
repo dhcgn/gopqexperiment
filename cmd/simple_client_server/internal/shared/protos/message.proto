@@ -1,0 +1,31 @@
+syntax = "proto3";
+package hpke_simple_client_server;
+
+
+option go_package = "/";
+
+message Message {
+     int32 version = 1;
+
+     string target = 2;
+     Content content = 3;
+     bytes signature = 4;
+}    
+
+
+message Content {
+     int32 version = 1;
+
+     string info = 2;
+     string pskid = 3;
+     bytes encapsulatedkey = 4;
+     bytes ciphertext = 5;
+     bytes associateddata = 6;
+     PublicKeys senderspublickeys = 7;
+}   
+
+message PublicKeys {
+     int32 version = 1;
+    
+     bytes hpke = 2;
+}   

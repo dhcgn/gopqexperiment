@@ -55,6 +55,13 @@ func (c Client) SendMessages(transport chan<- shared.Message, pub hpkehelper.Pub
 		_, plain := VerifyAndDecrypt(resp, privateHpke)
 
 		fmt.Println("Client", "Got response", string(plain))
+
+		startDateTime, _ := time.Parse(time.RFC3339Nano, string(plain))
+		serverDateTime := time.Now()
+
+		duration := serverDateTime.Sub(startDateTime)
+		fmt.Println("Server", "Duration", duration)
+
 	}(keyPair.KeyPair.PrivateKeys.Hpke)
 
 	fmt.Println("Client", "Send message of length", len(transportData.Protobuf))

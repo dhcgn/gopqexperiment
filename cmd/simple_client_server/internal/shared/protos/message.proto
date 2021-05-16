@@ -8,7 +8,7 @@ message Message {
      int32 version = 1;
 
      string target = 2;
-     Content content = 3;
+     bytes contentData = 3;
      bytes signature = 4;
      PublicKeys sendersEd25519PublicKeys = 7;
 }    

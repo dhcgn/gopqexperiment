@@ -1,6 +1,7 @@
 package hpkehelper
 
 import (
+	"crypto/ed25519"
 	"crypto/rand"
 
 	"github.com/cloudflare/circl/hpke"
@@ -92,22 +93,31 @@ func CreateEncryptedMessage(senderHpke HpkeEphemeralKeyPair, senderEd25519 share
 	// 	SendersPublicKeys: private.PublicKeys,
 	// }, nil
 
-	protbufMessage := &protos.Message{
-		Version: 1,
-		Target:  "MyTarget",
-		Content: &protos.Content{
-			Version:         1,
-			Info:            info,
-			PskID:           "MyPSKID",
-			EncapsulatedKey: enc,
-			CipherText:      ct,
-			AssociatedData:  aad,
-			SendersHpkePublicKeys: &protos.PublicKeys{
-				Version: 1,
-				Hpke:    senderHpke.KeyPair.PublicKeys.Hpke,
-				Ed25519: senderEd25519.PublicKey,
-			},
+	content := &protos.Content{
+		Version:         1,
+		Info:            info,
+		PskID:           "MyPSKID",
+		EncapsulatedKey: enc,
+		CipherText:      ct,
+		AssociatedData:  aad,
+		SendersHpkePublicKeys: &protos.PublicKeys{
+			Version: 1,
+			Hpke:    senderHpke.KeyPair.PublicKeys.Hpke,
+			Ed25519: senderEd25519.PublicKey,
 		},
+	}
+
+	contentData, err := proto.Marshal(content)
+	if err != nil {
+		return nil, err
+	}
+
+	ed25519.Sign(senderEd25519.PrivateKey, contentData)
+
+	protbufMessage := &protos.Message{
+		Version:                  1,
+		Target:                   "MyTarget",
+		ContentData:              contentData,
 		Signature:                []byte{},
 		SendersEd25519PublicKeys: &protos.PublicKeys{},
 	}

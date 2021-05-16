@@ -21,6 +21,7 @@ func (s *Server) Prepair() {
 	n.GenerateStaticKeyPairs()
 
 	s.HpkeStaticKeyPair = n.HpkeStaticKeyPair
+	s.StaticSigningKeyPair = n.StaticSigningKeyPair
 
 	go hpkehelper.GenerateHpkeEphemeralKeyPairsWorker(s.HpkeEphemeralKeyPairs)
 }

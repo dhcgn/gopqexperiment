@@ -19,9 +19,12 @@ func NewClient() *Client {
 	}
 }
 
-func (c Client) Prepair() {
-	n := hpkehelper.Node(c)
+func (c *Client) Prepair() {
+	n := hpkehelper.Node(*c)
 	n.GenerateStaticKeyPairs()
+
+	c.HpkeStaticKeyPair = n.HpkeStaticKeyPair
+	c.StaticSigningKeyPair = n.StaticSigningKeyPair
 
 	go hpkehelper.GenerateHpkeEphemeralKeyPairsWorker(c.HpkeEphemeralKeyPairs)
 }

@@ -155,7 +155,7 @@ func CreateEncryptedMessage(senderHpke EphemeralKeyPair, senderEd25519 StaticSig
 }
 
 func VerifyAndDecrypt(transportData []byte, privateHpke []byte) (hpke []byte, plain []byte) {
-	fmt.Println("Client", "receive data with length", len(transportData))
+	fmt.Println("VerifyAndDecrypt", "receive data with length", len(transportData))
 
 	var protoMessage protos.Message
 	err := proto.Unmarshal(transportData, &protoMessage)
@@ -164,7 +164,7 @@ func VerifyAndDecrypt(transportData []byte, privateHpke []byte) (hpke []byte, pl
 	}
 
 	verified := ed25519.Verify(protoMessage.GetSendersEd25519PublicKeys().Ed25519, protoMessage.ContentData, protoMessage.Signature)
-	fmt.Println("Client", "Signature", verified)
+	fmt.Println("VerifyAndDecrypt", "Signature", verified)
 
 	if !verified {
 		panic("Signature invalid")

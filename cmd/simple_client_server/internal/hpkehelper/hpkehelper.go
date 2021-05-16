@@ -53,6 +53,37 @@ type PrivateKeys struct {
 	Hpke []byte
 }
 
+func Decrypt(content protos.Content, privateHpkeKey []byte) ([]byte, error) {
+	privateKey, err := kemID.Scheme().UnmarshalBinaryPrivateKey(privateHpkeKey)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	publicKey, err := kemID.Scheme().UnmarshalBinaryPublicKey(content.SendersHpkePublicKeys.Hpke)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	suite := hpke.NewSuite(kemID, kdfID, aeadID)
+
+	receiver, err := suite.NewReceiver(privateKey, []byte(content.Info))
+	if err != nil {
+		return []byte{}, err
+	}
+
+	opener, err := receiver.SetupAuth(content.EncapsulatedKey, publicKey)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	plain, err := opener.Open(content.CipherText, content.AssociatedData)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return plain, nil
+}
+
 func CreateEncryptedMessage(senderHpke HpkeEphemeralKeyPair, senderEd25519 shared.StaticKeyPair, recipientHpke PublicKeys, msg []byte) ([]byte, error) {
 	info := "Encrypted Content from Application XYZ"
 
@@ -112,14 +143,18 @@ func CreateEncryptedMessage(senderHpke HpkeEphemeralKeyPair, senderEd25519 share
 		return nil, err
 	}
 
-	ed25519.Sign(senderEd25519.PrivateKey, contentData)
+	signature := ed25519.Sign(senderEd25519.PrivateKey, contentData)
 
 	protbufMessage := &protos.Message{
-		Version:                  1,
-		Target:                   "MyTarget",
-		ContentData:              contentData,
-		Signature:                []byte{},
-		SendersEd25519PublicKeys: &protos.PublicKeys{},
+		Version:     1,
+		Target:      "MyTarget",
+		ContentData: contentData,
+		Signature:   signature,
+		SendersEd25519PublicKeys: &protos.PublicKeys{
+			Version: 1,
+			Hpke:    nil,
+			Ed25519: senderEd25519.PublicKey,
+		},
 	}
 	protbufMessage.ProtoMessage()
 

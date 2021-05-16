@@ -34,7 +34,7 @@ func (c Client) SendMessages(transport chan<- shared.Message, pub hpkehelper.Pub
 
 	// Read a HpkeEphemeralKeyPair, so a new one is generated in the backgroudn
 	//protobuf := hpkehelper.CreateEncryptedMessage(<-c.HpkeEphemeralKeyPairs, c.StaticSigningKemsgyPair, pub)
-	msg := []byte(time.Now().Format("RFC3339Nano"))
+	msg := []byte(time.Now().Format(time.RFC3339Nano))
 	protobuf, err := hpkehelper.CreateEncryptedMessage(<-c.HpkeEphemeralKeyPairs, c.StaticSigningKeyPair, pub, msg)
 	if err != nil {
 		panic(err)
